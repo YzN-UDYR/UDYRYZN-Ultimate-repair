@@ -18,10 +18,10 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 $UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 
 # 3. YAPILANDIRMA
-$CURRENT_VER = "1.0" 
+$CURRENT_VER = "2.0" 
 # Not: Versiyon kontrol URL'lerini orijinal dosyalardan aldım, gerekirse güncelleyin.
-$URL_VERSION = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Repair/main/version.txt"
-$URL_SCRIPT = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Repair/main/UDYRYZN_DEEP_REPAIR.ps1" # Şimdilik orijinali işaret ediyor
+$URL_VERSION = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/version.txt"
+$URL_SCRIPT = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/UDYRYZN_ULTIMATE_REPAIR.ps1" # Şimdilik orijinali işaret ediyor
 
 # Renk Kodları (Orijinal Dosyadan)
 $ESC = [char]27
