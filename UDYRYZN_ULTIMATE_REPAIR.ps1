@@ -294,7 +294,7 @@ while ($true) {
     Show-Header
     
     Write-Host "  $C╔═══════════════════════════════════════════════════════════════════════════════════╗$W"
-    Write-Host "  $C║$W                         $YANA MENU$W                                                  $C║$W"
+    Write-Host "  $C║$W                            $YANA MENU$W                                                  $C║$W"
     Write-Host "  $C╠═══════════════════════════════════════════════════════════════════════════════════╣$W"
     Write-Host "  $C║$W                                                                                   $C║$W"
     Write-Host "  $C║$W     ${G}[1]$W HIZLI TEMIZLIK (Fast Clean)     $Y>>$W Hizli onbellek ve ag temizligi         $C║$W"
