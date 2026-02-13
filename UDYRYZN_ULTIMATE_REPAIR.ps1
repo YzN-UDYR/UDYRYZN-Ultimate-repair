@@ -1,9 +1,7 @@
-﻿<#
-    UDYRYZN ULTIMATE REPAIR ENGINE v1.0
-    Unified System Maintenance Tool
-    
-    Credits: YzN-UDYR
-#>
+# UDYRYZN ULTIMATE REPAIR ENGINE v1.0
+# Unified System Maintenance Tool
+#
+# Credits: YzN-UDYR
 
 # 1. YONETICI KONTROLU (Admin Privileges)
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
