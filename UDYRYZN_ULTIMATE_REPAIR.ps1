@@ -100,7 +100,7 @@ function Show-Header {
     Write-Host "$C$PAD_LOGO     ╚═════╝ ╚═════╝    ╚═╝   ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝$W"
     Write-Host ""
     Write-Host "  $B$PAD_BOX╔═══════════════════════════════════════════════════════════════════════════════════╗$W"
-    Write-Host "  $B$PAD_BOX║$W  ${R}[MODE]$W : $W Ultimate Repair Engine$W $B║$W   ${Y}[USER]$W : $W $env:USERNAME$W      $B║$W   ${Y}[VER]$W : $W $CURRENT_VER $B║$W"
+    Write-Host "  $B$PAD_BOX║$W  ${R}[MODE]$W : $W Ultimate Repair Engine$W $B║$W   ${Y}[USER]$W : $W $env:USERNAME$W      $B║$W   ${Y}[VER]$W : $W $CURRENT_VER     $B║$W"
     Write-Host "  $B$PAD_BOX╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
     Write-Host ""
 }
@@ -246,7 +246,7 @@ function Start-ExtraTools {
     while ($true) {
         Show-Header
         Write-Host "  $C╔═══════════════════════════════════════════════════════════════════════════════════╗$W"
-        Write-Host "  $C║$W                       $Y🛠️  EKSTRA ARACLAR$W                                         $C║$W"
+        Write-Host "  $C║$W                        $Y🛠️  EKSTRA ARACLAR$W                                         $C║$W"
         Write-Host "  $C╠═══════════════════════════════════════════════════════════════════════════════════╣$W"
         Write-Host "  $C║$W                                                                                   $C║$W"
         Write-Host "  $C║$W     ${G}[1]$W Disk Temizleme Araci (Cleanmgr)                                           $C║$W"
