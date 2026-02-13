@@ -18,7 +18,7 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 $UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 
 # 3. YAPILANDIRMA
-$CURRENT_VER = "1.1" 
+$CURRENT_VER = "1.2" 
 # Not: Versiyon kontrol URL'lerini orijinal dosyalardan aldım, gerekirse güncelleyin.
 $URL_VERSION = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/version.txt"
 $URL_SCRIPT = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/UDYRYZN_ULTIMATE_REPAIR.ps1"
@@ -345,6 +345,97 @@ function Start-ExtraTools {
     }
 }
 
+function Start-DailyFixes {
+    while ($true) {
+        Show-Header
+        Write-Host "  $C╔═══════════════════════════════════════════════════════════════════════════════════╗$W"
+        Write-Host "  $C║$W                     $Y🚑  GUNDELIK SORUN COZUCU (Daily Fixes)$W                       $C║$W"
+        Write-Host "  $C╠═══════════════════════════════════════════════════════════════════════════════════╣$W"
+        Write-Host "  $C║$W                                                                                   $C║$W"
+        Write-Host "  $C║$W     ${G}[1]$W Yazici Sorunlarini Coz (Print Spooler Fix)                                $C║$W"
+        Write-Host "  $C║$W     ${G}[2]$W Laptop Pil Sagligi Raporu (Battery Report)                                $C║$W"
+        Write-Host "  $C║$W     ${G}[3]$W Kayitli Wi-Fi Sifrelerini Goster (Show Wifi Pass)                         $C║$W"
+        Write-Host "  $C║$W     ${G}[4]$W Microsoft Store Onarimi (WSReset)                                         $C║$W"
+        Write-Host "  $C║$W     ${G}[5]$W Internet Saati Senkronizasyonu (Time Sync)                                $C║$W"
+        Write-Host "  $C║$W     ${G}[6]$W Nihai Performans Modunu Ac (Unlock Ultimate Performance)                  $C║$W"
+        Write-Host "  $C║$W     ${G}[7]$W Internet Baglanti Testi & DNS Temizligi (Ping & Flush)                    $C║$W"
+        Write-Host "  $C║$W     ${R}[0]$W Geri Don                                                                  $C║$W"
+        Write-Host "  $C║$W                                                                                   $C║$W"
+        Write-Host "  $C╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
+        Write-Host ""
+        Write-Host -NoNewline "  $C►$W Seciminiz: "
+        
+        $dlMenu = Read-Host
+        
+        switch ($dlMenu) {
+            "1" {
+                Write-Host "  $Y Yazdirma kuyrugu temizleniyor...$W"
+                Restart-Service spooler -Force -ErrorAction SilentlyContinue
+                Write-Host "  $G Yazici servisi yeniden baslatildi!$W"
+                Start-Sleep -Seconds 2
+            }
+            "2" {
+                Write-Host "  $Y Pil raporu olusturuluyor...$W"
+                $reportPath = "$env:USERPROFILE\Desktop\battery-report.html"
+                powercfg /batteryreport /output "$reportPath" | Out-Null
+                Write-Host "  $G Rapor masaustune kaydedildi: $reportPath $W"
+                Start-Process "$reportPath"
+                Start-Sleep -Seconds 2
+            }
+            "3" {
+                Write-Host "  $Y Kayitli Wi-Fi Profilleri Taraniyor...$W"
+                $profiles = netsh wlan show profiles | Select-String "All User Profile" | ForEach-Object { $_.ToString().Split(":")[1].Trim() }
+                foreach ($p in $profiles) {
+                    $info = netsh wlan show profile name="$p" key=clear
+                    $pass = $info | Select-String "Key Content"
+                    if ($pass) {
+                        $passClean = $pass.ToString().Split(":")[1].Trim()
+                        Write-Host "  $C $p $W : $G $passClean $W"
+                    }
+                    else {
+                        Write-Host "  $C $p $W : $R (Sifre Yok/Acik Ag) $W"
+                    }
+                }
+                Write-Host ""
+                Read-Host "  Devam etmek icin Enter'a basin..."
+            }
+            "4" {
+                Write-Host "  $Y Microsoft Store onbelligi sifirlaniyor (Bu islem surebilir)...$W"
+                Start-Process "wsreset.exe" -Wait
+                Write-Host "  $G Magaza sifirlandi!$W"
+                Start-Sleep -Seconds 2
+            }
+            "5" {
+                Write-Host "  $Y Windows Saati senkronize ediliyor...$W"
+                Start-Service w32time -ErrorAction SilentlyContinue
+                w32tm /resync | Out-Null
+                Write-Host "  $G Saat guncellendi!$W"
+                Start-Sleep -Seconds 2
+            }
+            "6" {
+                Write-Host "  $Y Nihai Performans (Ultimate Performance) modu kilidi aciliyor...$W"
+                powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 | Out-Null
+                Write-Host "  $G Guc planlarina 'Nihai Performans' eklendi. Guc seceneklerinden aktif edebilirsiniz.$W"
+                Start-Sleep -Seconds 3
+            }
+            "7" {
+                Write-Host "  $Y DNS Onbellegi temizleniyor...$W"
+                ipconfig /flushdns | Out-Null
+                Write-Host "  $Y Baglanti testi yapiliyor (Google & Cloudflare)...$W"
+                
+                if (Test-Connection -ComputerName 8.8.8.8 -Count 1 -Quiet) {
+                    Write-Host "  $G Internet BAGLANDI (Google DNS Erisebilir)$W"
+                }
+                else {
+                    Write-Host "  $R Internet BAGLANTISI YOK!$W"
+                }
+                Start-Sleep -Seconds 3
+            }
+            "0" { return }
+        }
+    }
+}
+
 # 6. ANA DONGU (MAIN LOOP)
 
 while ($true) {
@@ -357,7 +448,8 @@ while ($true) {
     Write-Host "  $C║$W     ${G}[1]$W HIZLI TEMIZLIK (Fast Clean)     $Y>>$W Hizli onbellek ve ag temizligi         $C║$W"
     Write-Host "  $C║$W     ${G}[2]$W DERIN ONARIM (Deep Repair)      $Y>>$W SFC, DISM, Sistem Onarimi              $C║$W"
     Write-Host "  $C║$W     ${G}[3]$W EKSTRA ARACLAR                  $Y>>$W Disk ve Update araclari                $C║$W"
-    Write-Host "  $C║$W     ${G}[4]$W CIKIS                           $Y>>$W Uygulamayi kapat                       $C║$W"
+    Write-Host "  $C║$W     ${G}[4]$W GUNDELIK SORUN COZUCU           $Y>>$W Wifi, Yazici, Pil, Store vs.           $C║$W"
+    Write-Host "  $C║$W     ${G}[5]$W CIKIS                           $Y>>$W Uygulamayi kapat                       $C║$W"
     Write-Host "  $C║$W                                                                                   $C║$W"
     Write-Host "  $C╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
     Write-Host ""
@@ -370,7 +462,8 @@ while ($true) {
         "1" { Start-FastClean }
         "2" { Start-DeepRepair }
         "3" { Start-ExtraTools }
-        "4" { exit }
+        "4" { Start-DailyFixes }
+        "5" { exit }
         default { 
             Write-Host "  $R Gecersiz secim!$W"
             Start-Sleep -Seconds 1
