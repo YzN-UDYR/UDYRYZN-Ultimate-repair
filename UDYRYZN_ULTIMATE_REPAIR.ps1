@@ -80,7 +80,64 @@ try {
             
             if ($choice -eq "E" -or $choice -eq "e") {
                 Write-Host "  $C⚙️  GUNCELLEME BASLATILIYOR...$W"
-                Start-Sleep -Seconds 2
+                
+                # Yedek oluştur (Rollback için)
+                Write-Host -NoNewline "  $PAD_SUB Yedek olusturuluyor"
+                $BackupPath = "$env:TEMP\UDYRYZN_Backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').ps1"
+                try {
+                    Copy-Item $PSCommandPath $BackupPath -Force
+                    Write-Host " ${G}[DONE]$W"
+                }
+                catch {
+                    Write-Host " ${Y}[SKIP]$W"
+                }
+                
+                Write-Host -NoNewline "  $PAD_SUB Yeni surum indiriliyor"
+                
+                # İndirme animasyonu
+                for ($i = 0; $i -lt 8; $i++) {
+                    Write-Host -NoNewline "."
+                    Start-Sleep -Milliseconds 200
+                }
+                
+                try {
+                    $newCode = (Invoke-WebRequest -Uri $URL_SCRIPT -UserAgent $UA -UseBasicParsing).Content
+                    Write-Host " ${G}[DONE]$W"
+                    
+                    Write-Host -NoNewline "  $PAD_SUB Dosya kaydediliyor"
+                    for ($i = 0; $i -lt 4; $i++) {
+                        Write-Host -NoNewline "."
+                        Start-Sleep -Milliseconds 150
+                    }
+                    
+                    # Dosyayı UTF-8 BOM ile kaydet (Muhurluyor)
+                    [System.IO.File]::WriteAllText($PSCommandPath, $newCode, [System.Text.Encoding]::UTF8)
+                    Write-Host " ${G}[DONE]$W"
+                    
+                    Write-Host -NoNewline "  $PAD_SUB Yeni surum baslatiliyor"
+                    for ($i = 0; $i -lt 4; $i++) {
+                        Write-Host -NoNewline "."
+                        Start-Sleep -Milliseconds 150
+                    }
+                    Write-Host " ${G}[OK]$W"
+                    Write-Host ""
+                    Write-Host "  $G✓ Guncelleme tamamlandi! Yeni pencere aciliyor...$W"
+                    Write-Host ""
+                    Start-Sleep -Seconds 2
+                    
+                    Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
+                    exit
+                }
+                catch {
+                    Write-Host " ${R}[FAIL]$W"
+                    Write-Host "  $Y⚠ Hata! Eski surum geri yukleniyor...$W"
+                    if (Test-Path $BackupPath) {
+                        Copy-Item $BackupPath $PSCommandPath -Force
+                        Write-Host "  $G✓ Eski surum geri yuklendi.$W"
+                    }
+                    Start-Sleep -Seconds 3
+                    return
+                }
             }
         }
     }
