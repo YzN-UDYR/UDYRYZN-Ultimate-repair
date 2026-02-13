@@ -21,7 +21,7 @@ $UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 $CURRENT_VER = "1.1" 
 # Not: Versiyon kontrol URL'lerini orijinal dosyalardan aldım, gerekirse güncelleyin.
 $URL_VERSION = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/version.txt"
-$URL_SCRIPT = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/UDYRYZN_ULTIMATE_REPAIR.ps1" # Şimdilik orijinali işaret ediyor
+$URL_SCRIPT = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/UDYRYZN_ULTIMATE_REPAIR.ps1"
 
 # Renk Kodları (Orijinal Dosyadan)
 $ESC = [char]27
@@ -64,13 +64,13 @@ try {
             Write-Host "  $Y║$W         $R▀$Y███$R▀                                                                     $Y║$W"
             Write-Host "  $Y║$W          $Y▀$R█$Y▀                                                                      $Y║$W"
             Write-Host "  $Y║$W                       $R[MEVCUT SURUM]$W  :  $W v$CURRENT_VER$W                                   $Y║$W"
-            Write-Host "  $Y║$W                       $G[YENI SURUM]$W    :  $G v$ONLINE_VER$W                                   $Y║$W"
+            Write-Host "  $Y║$W                       ${G}[YENI SURUM]$W    :  $G v$ONLINE_VER$W                                   $Y║$W"
             Write-Host "  $Y║$W                                                                                   $Y║$W"
             Write-Host "  $Y║$W             Yeni surum gelismis ozellikler ve hata duzeltmeleri iceriyor.         $Y║$W"
             Write-Host "  $Y║$W                                                                                   $Y║$W"
             Write-Host "  $Y╠═══════════════════════════════════════════════════════════════════════════════════╣$W"
             Write-Host "  $Y║$W                                                                                   $Y║$W"
-            Write-Host "  $Y║$W             $G[E]$W - Evet, Simdi Guncelle        $R[H]$W - Hayir, Atla                   $Y║$W"
+            Write-Host "  $Y║$W             ${G}[E]$W - Evet, Simdi Guncelle        ${R}[H]$W - Hayir, Atla                   $Y║$W"
             Write-Host "  $Y║$W                                                                                   $Y║$W"
             Write-Host "  $Y╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
             Write-Host ""
@@ -79,9 +79,7 @@ try {
             $choice = Read-Host
             
             if ($choice -eq "E" -or $choice -eq "e") {
-                # Güncelleme mantığı burada çalışır (Orijinal koddan kısaltılarak eklendi)
                 Write-Host "  $C⚙️  GUNCELLEME BASLATILIYOR...$W"
-                # ... (Güncelleme kodları buraya gelebilir, şimdilik atlıyoruz)
                 Start-Sleep -Seconds 2
             }
         }
@@ -102,7 +100,7 @@ function Show-Header {
     Write-Host "$C$PAD_LOGO     ╚═════╝ ╚═════╝    ╚═╝   ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝$W"
     Write-Host ""
     Write-Host "  $B$PAD_BOX╔═══════════════════════════════════════════════════════════════════════════════════╗$W"
-    Write-Host "  $B$PAD_BOX║$W  $R[MODE]$W : $W Ultimate Repair Engine$W $B║$W   $Y[USER]$W : $W $env:USERNAME$W      $B║$W   $Y[VER]$W : $W $CURRENT_VER $B║$W"
+    Write-Host "  $B$PAD_BOX║$W  ${R}[MODE]$W : $W Ultimate Repair Engine$W $B║$W   ${Y}[USER]$W : $W $env:USERNAME$W      $B║$W   ${Y}[VER]$W : $W $CURRENT_VER $B║$W"
     Write-Host "  $B$PAD_BOX╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
     Write-Host ""
 }
@@ -121,9 +119,9 @@ function Start-FastClean {
         ipconfig /renew   | Out-Null
         netsh winsock reset | Out-Null
         netsh int ip reset | Out-Null
-        Write-Host " $G[DONE]$W"
+        Write-Host " ${G}[DONE]$W"
     }
-    catch { Write-Host " $R[FAIL]$W" }
+    catch { Write-Host " ${R}[FAIL]$W" }
 
     # 2. Temp Temizliği (PowerShell ile daha güvenli)
     Write-Host "  $P[02]$W $C GEÇİCİ DOSYA TEMİZLİĞİ$W"
@@ -145,7 +143,7 @@ function Start-FastClean {
     # Geri Dönüşüm Kutusu
     Clear-RecycleBin -Force -ErrorAction SilentlyContinue
 
-    Write-Host " $G[DONE]$W"
+    Write-Host " ${G}[DONE]$W"
 
     Write-Host ""
     Write-Host "  $G✓ HIZLI TEMIZLIK TAMAMLANDI!$W"
@@ -162,7 +160,7 @@ function Start-DeepRepair {
         param($OpNum)
         $percent = [math]::Round(($OpNum / $TOTAL_OPS) * 100)
         $bar = "█" * [math]::Floor($percent / 5) + "░" * (20 - [math]::Floor($percent / 5))
-        Write-Host "  $B$PAD_BOX[$bar$B] $Y$percent%$W ($OpNum/$TOTAL_OPS operasyon)$W"
+        Write-Host "  $B${PAD_BOX}[$bar$B] $Y$percent%$W ($OpNum/$TOTAL_OPS operasyon)$W"
         Write-Host ""
     }
 
@@ -172,10 +170,9 @@ function Start-DeepRepair {
     # [01] AG KATMANI
     Show-Progress 0
     Write-Host "  $P$PAD_TXT[01]$W $C AG KATMANI DERIN SIFIRLAMA$W"
-    # ... (Orijinal koddan özetlendi, zaten FastClean'de de var ama burada tekrar derinlemesine yapıyoruz)
     netsh winsock reset | Out-Null
     ipconfig /flushdns | Out-Null
-    Write-Host "  $PAD_SUB Ag Protokolleri Sifirlandi $G[DONE]$W"
+    Write-Host "  $PAD_SUB Ag Protokolleri Sifirlandi ${G}[DONE]$W"
     $script:SuccessCount++
     Write-Host ""
 
@@ -184,7 +181,7 @@ function Start-DeepRepair {
     Write-Host "  $P$PAD_TXT[02]$W $C SISTEM DOSYASI ONARIMI (SFC)$W"
     Write-Host "  $PAD_SUB Sistem taramasi baslatiliyor, lutfen bekleyin..."
     Start-Process -FilePath "sfc" -ArgumentList "/scannow" -Wait -NoNewWindow
-    Write-Host "  $PAD_SUB SFC Taramasi Tamamlandi $G[DONE]$W"
+    Write-Host "  $PAD_SUB SFC Taramasi Tamamlandi ${G}[DONE]$W"
     $script:SuccessCount++
     Write-Host ""
 
@@ -195,7 +192,7 @@ function Start-DeepRepair {
     dism /online /cleanup-image /restorehealth | Out-Null
     Write-Host "  $PAD_SUB ComponentCleanup calistiriliyor..."
     dism /online /cleanup-image /startcomponentcleanup | Out-Null
-    Write-Host "  $PAD_SUB DISM Islemleri Tamamlandi $G[DONE]$W"
+    Write-Host "  $PAD_SUB DISM Islemleri Tamamlandi ${G}[DONE]$W"
     $script:SuccessCount++
     Write-Host ""
 
@@ -205,7 +202,7 @@ function Start-DeepRepair {
     Get-WinEvent -ListLog * -ErrorAction SilentlyContinue | ForEach-Object {
         try { [System.Diagnostics.Eventing.Reader.EventLogSession]::GlobalSession.ClearLog($_.LogName) } catch {}
     }
-    Write-Host "  $PAD_SUB Sistem Loglari Temizlendi $G[DONE]$W"
+    Write-Host "  $PAD_SUB Sistem Loglari Temizlendi ${G}[DONE]$W"
     $script:SuccessCount++
     Write-Host ""
 
@@ -216,7 +213,7 @@ function Start-DeepRepair {
     Get-ChildItem "$env:localappdata\IconCache.db" -ErrorAction SilentlyContinue | Remove-Item -Force
     Get-ChildItem "$env:localappdata\Microsoft\Windows\Explorer\iconcache_*.db" -ErrorAction SilentlyContinue | Remove-Item -Force
     Start-Process explorer.exe
-    Write-Host "  $PAD_SUB Ikon Bellegi Sifirlandi $G[DONE]$W"
+    Write-Host "  $PAD_SUB Ikon Bellegi Sifirlandi ${G}[DONE]$W"
     $script:SuccessCount++
     Write-Host ""
 
@@ -225,7 +222,7 @@ function Start-DeepRepair {
     Write-Host "  $P$PAD_TXT[06]$W $C USB AUTOPLAY$W"
     try {
         Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers" -Name "DisableAutoplay" -Value 0 -Force
-        Write-Host "  $PAD_SUB USB Autoplay Aktif Edildi $G[DONE]$W"
+        Write-Host "  $PAD_SUB USB Autoplay Aktif Edildi ${G}[DONE]$W"
     }
     catch { }
     Write-Host ""
@@ -236,7 +233,7 @@ function Start-DeepRepair {
     if (Get-Command winget -ErrorAction SilentlyContinue) {
         Write-Host "  $PAD_SUB Guncellemeler kontrol ediliyor..."
         winget upgrade --all --silent --accept-package-agreements --accept-source-agreements
-        Write-Host "  $PAD_SUB Winget islemi tamamlandi $G[DONE]$W"
+        Write-Host "  $PAD_SUB Winget islemi tamamlandi ${G}[DONE]$W"
     }
     Write-Host ""
 
@@ -252,9 +249,9 @@ function Start-ExtraTools {
         Write-Host "  $C║$W                       $Y🛠️  EKSTRA ARACLAR$W                                         $C║$W"
         Write-Host "  $C╠═══════════════════════════════════════════════════════════════════════════════════╣$W"
         Write-Host "  $C║$W                                                                                   $C║$W"
-        Write-Host "  $C║$W     $G[1]$W Disk Temizleme Araci (Cleanmgr)                                           $C║$W"
-        Write-Host "  $C║$W     $G[2]$W Windows Update Onbellegini Sifirla (SoftwareDistribution)                 $C║$W"
-        Write-Host "  $C║$W     $R[0]$W Geri Don                                                                  $C║$W"
+        Write-Host "  $C║$W     ${G}[1]$W Disk Temizleme Araci (Cleanmgr)                                           $C║$W"
+        Write-Host "  $C║$W     ${G}[2]$W Windows Update Onbellegini Sifirla (SoftwareDistribution)                 $C║$W"
+        Write-Host "  $C║$W     ${R}[0]$W Geri Don                                                                  $C║$W"
         Write-Host "  $C║$W                                                                                   $C║$W"
         Write-Host "  $C╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
         Write-Host ""
@@ -300,10 +297,10 @@ while ($true) {
     Write-Host "  $C║$W                         $YANA MENU$W                                                  $C║$W"
     Write-Host "  $C╠═══════════════════════════════════════════════════════════════════════════════════╣$W"
     Write-Host "  $C║$W                                                                                   $C║$W"
-    Write-Host "  $C║$W     $G[1]$W HIZLI TEMIZLIK (Fast Clean)     $Y>>$W Hizli onbellek ve ag temizligi         $C║$W"
-    Write-Host "  $C║$W     $G[2]$W DERIN ONARIM (Deep Repair)      $Y>>$W SFC, DISM, Sistem Onarimi              $C║$W"
-    Write-Host "  $C║$W     $G[3]$W EKSTRA ARACLAR                  $Y>>$W Disk ve Update araclari                $C║$W"
-    Write-Host "  $C║$W     $G[4]$W CIKIS                           $Y>>$W Uygulamayi kapat                       $C║$W"
+    Write-Host "  $C║$W     ${G}[1]$W HIZLI TEMIZLIK (Fast Clean)     $Y>>$W Hizli onbellek ve ag temizligi         $C║$W"
+    Write-Host "  $C║$W     ${G}[2]$W DERIN ONARIM (Deep Repair)      $Y>>$W SFC, DISM, Sistem Onarimi              $C║$W"
+    Write-Host "  $C║$W     ${G}[3]$W EKSTRA ARACLAR                  $Y>>$W Disk ve Update araclari                $C║$W"
+    Write-Host "  $C║$W     ${G}[4]$W CIKIS                           $Y>>$W Uygulamayi kapat                       $C║$W"
     Write-Host "  $C║$W                                                                                   $C║$W"
     Write-Host "  $C╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
     Write-Host ""
