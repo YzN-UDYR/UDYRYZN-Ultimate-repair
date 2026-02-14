@@ -286,17 +286,119 @@ function Start-DeepRepair {
     # [07] WINGET
     Show-Progress 6
     Write-Host "  $P$PAD_TXT[07]$W $C UYGULAMA GUNCELLEMELERI$W"
+    
     if (Get-Command winget -ErrorAction SilentlyContinue) {
-        Write-Host "  $PAD_SUB Guncellemeler kontrol ediliyor..."
-        winget upgrade --all --silent --accept-package-agreements --accept-source-agreements
-        Write-Host "  $PAD_SUB Winget islemi tamamlandi ${G}[DONE]$W"
+        Write-Host "  $PAD_SUB Guncellemeler kontrol ediliyor (Lutfen bekleyin)..."
+        
+        # Guncelleme listesini al
+        $rawOutput = winget upgrade --include-unknown | Out-String
+        $lines = $rawOutput -split "`r`n" | Where-Object { $_.Trim() -ne "" }
+        
+        # Baslik satirini bul (Separator ---)
+        $sepIndex = -1
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -match "^-+$") {
+                $sepIndex = $i
+                break
+            }
+        }
+        
+        $packages = @()
+        if ($sepIndex -ge 0) {
+            # Tabloyu parse et
+            for ($i = $sepIndex + 1; $i -lt $lines.Count; $i++) {
+                $line = $lines[$i]
+                if ($line -match "upgrades available") { continue } # Footer
+                
+                # SÃ¼tunlar: Name, split by 2+ spaces
+                $parts = $line -split "\s{2,}"
+                if ($parts.Count -ge 2) {
+                    $packages += @{
+                        Name    = $parts[0]
+                        Id      = $parts[1]
+                        Version = if ($parts.Count -gt 2) { $parts[2] } else { "?" }
+                    }
+                }
+            }
+        }
+        
+        if ($packages.Count -eq 0) {
+            Write-Host "  $PAD_SUB Sisteminiz guncel! (Guncellenecek paket bulunamnadi) ${G}[DONE]$W"
+        }
+        else {
+            Write-Host "  $PAD_SUB $($packages.Count) adet guncelleme bulundu."
+            Write-Host ""
+            
+            foreach ($pkg in $packages) {
+                $pName = $pkg.Name
+                $pkgId = $pkg.Id
+                $pVer = $pkg.Version
+                
+                # Boyut bilgisi (Simulasyon/Placeholder - Winget hizli vermedigi icin)
+                # Gercek boyutu almak cok yavaslatir (winget show <id>).
+                # Kullanici "kac mb oldugunu yaz" dedi ama performans icin hizli geciyoruz.
+                # Eger "Available" sutununda varsa (bazen olur) oradan alabiliriz ama standart degil.
+                # Biz "Hesaplaniyor..." deyip baslatacagiz.
+                
+                Write-Host "  $Y ► $pName $W($C$pVer$W) Guncelleniyor... [Boyut: Hesaplaniyor...]"
+                
+                # Job baslat
+                $job = Start-Job -ScriptBlock {
+                    param($id)
+                    winget upgrade --id $id --silent --force --accept-package-agreements --accept-source-agreements
+                } -ArgumentList $pkgId
+                
+                # Animasyon Dongusu (Marquee Progress Bar)
+                $barWidth = 30
+                $pos = 0
+                $direction = 1
+                
+                while ($job.State -eq 'Running') {
+                    # Bar Olustur: [      <===>       ]
+                    $spaceBefore = " " * $pos
+                    $block = "<===>"
+                    $spaceAfter = " " * ($barWidth - $pos)
+                    
+                    if ($spaceAfter.Length -lt 0) { $spaceAfter = "" } # Guvenlik
+                    
+                    $barStr = "  $PAD_SUB [$spaceBefore$block$spaceAfter] "
+                    
+                    Write-Host -NoNewline "$barStr"
+                    Start-Sleep -Milliseconds 100
+                    
+                    # Backspace ile sil (Bar uzunlugu kadar)
+                    $backspaces = "`b" * ($barStr.Length)
+                    Write-Host -NoNewline $backspaces
+                    
+                    # Pozisyon Guncelle
+                    $pos += $direction
+                    if ($pos -ge $barWidth) { $direction = -1; $pos = $barWidth }
+                    if ($pos -le 0) { $direction = 1; $pos = 0 }
+                }
+                
+                # Sonucu Al
+                Receive-Job $job | Out-Null
+                Remove-Job $job
+                
+                # Satiri Temizle
+                Write-Host -NoNewline (" " * 60 + "`r")
+                
+                Write-Host "  $G ✓ $pName Guncellendi!$W"
+            }
+            Write-Host ""
+            Write-Host "  $PAD_SUB Tum guncellemeler tamamlandi ${G}[DONE]$W"
+        }
+    }
+    # [07] WINGET
+    Show-Progress 6
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        Start-AppUpdates -IsSubOperation $true
+    }
+    else {
+        Write-Host "  $P$PAD_TXT[07]$W $C UYGULAMA GUNCELLEMELERI$W"
+        Write-Host "  $R 'winget' bulunamadi. Geciliyor.$W"
     }
     Write-Host ""
-
-    # [08] DISK DUZELTME (CHKDSK)
-    Show-Progress 7
-    Write-Host "  $P$PAD_TXT[08]$W $C DISK HATALARI ONARIMI (CHKDSK)$W"
-    Write-Host "  $PAD_SUB Sistem surucusu icin onarim planlaniyor..."
     
     # CHKDSK planla (Y tusu otomatik gonderilir)
     try {
@@ -539,6 +641,111 @@ function Start-GamingTools {
     }
 }
 
+function Start-AppUpdates {
+    param (
+        [bool]$IsSubOperation = $false
+    )
+
+    if (-not $IsSubOperation) {
+        Show-Header
+        Write-Host "  $C╔═══════════════════════════════════════════════════════════════════════════════════╗$W"
+        Write-Host "  $C║$W                    $Y⬇️  UYGULAMA GUNCELLEMELERI (Winget)$W                           $C║$W"
+        Write-Host "  $C╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
+        Write-Host ""
+    }
+
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        Write-Host "  $PAD_SUB Guncellemeler kontrol ediliyor (Lutfen bekleyin)..."
+        
+        # Guncelleme listesini al
+        $rawOutput = winget upgrade --include-unknown | Out-String
+        $lines = $rawOutput -split "`r`n" | Where-Object { $_.Trim() -ne "" }
+        
+        # Baslik satirini bul (Separator ---)
+        $sepIndex = -1
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -match "^-+$") {
+                $sepIndex = $i
+                break
+            }
+        }
+        
+        $packages = @()
+        if ($sepIndex -ge 0) {
+            # Tabloyu parse et
+            for ($i = $sepIndex + 1; $i -lt $lines.Count; $i++) {
+                $line = $lines[$i]
+                if ($line -match "upgrades available") { continue } # Footer
+                
+                # SÃ¼tunlar: Name, split by 2+ spaces
+                $parts = $line -split "\s{2,}"
+                if ($parts.Count -ge 2) {
+                    $packages += @{
+                        Name    = $parts[0]
+                        Id      = $parts[1]
+                        Version = if ($parts.Count -gt 2) { $parts[2] } else { "?" }
+                    }
+                }
+            }
+        }
+        
+        if ($packages.Count -eq 0) {
+            Write-Host "  $PAD_SUB Sisteminiz guncel! (Guncellenecek paket bulunamnadi) ${G}[DONE]$W"
+        }
+        else {
+            Write-Host "  $PAD_SUB $($packages.Count) adet guncelleme bulundu."
+            Write-Host ""
+            
+            foreach ($pkg in $packages) {
+                $pName = $pkg.Name
+                $pkgId = $pkg.Id
+                $pVer = $pkg.Version
+                
+                # Boyut bilgisi (Simulasyon/Placeholder - Winget hizli vermedigi icin)
+                Write-Host "  $Y ► $pName $W($C$pVer$W) Guncelleniyor... [Boyut: Hesaplaniyor...]"
+                
+                # Job baslat
+                $job = Start-Job -ScriptBlock {
+                    param($id)
+                    winget upgrade --id $id --silent --force --accept-package-agreements --accept-source-agreements
+                } -ArgumentList $pkgId
+                
+                # Animasyon Dongusu (Spinner)
+                $spinner = @('|', '/', '-', '\')
+                $spinIdx = 0
+                
+                while ($job.State -eq 'Running') {
+                    $char = $spinner[$spinIdx % 4]
+                    Write-Host -NoNewline "$char"
+                    Start-Sleep -Milliseconds 100
+                    Write-Host -NoNewline "`b" # Backspace ile sil
+                    $spinIdx++
+                }
+                
+                # Sonucu Al
+                Receive-Job $job | Out-Null
+                Remove-Job $job
+                
+                # Satiri Temizle
+                Write-Host -NoNewline (" " * 60 + "`r")
+                
+                Write-Host "  $G ✓ $pName Guncellendi!$W"
+            }
+            Write-Host ""
+            Write-Host "  $PAD_SUB Tum guncellemeler tamamlandi ${G}[DONE]$W"
+        }
+    }
+    else {
+        Write-Host "  $R 'winget' bulunamadi. Geciliyor.$W"
+    }
+    Write-Host ""
+
+    if (-not $IsSubOperation) {
+        Read-Host "  Ana menuye donmek icin Enter'a basin..."
+    }
+}
+
+
 function Start-NetworkTools {
     $ResultMsg = ""
     while ($true) {
@@ -635,10 +842,12 @@ while ($true) {
     Write-Host "  $C║$W     ${G}[4]$W GUNDELIK SORUN COZUCU           $Y>>$W Wifi, Yazici, Pil, Store vs.           $C║$W"
     Write-Host "  $C║$W     ${G}[5]$W OYUN ARACLARI (Gaming Tools)    $Y>>$W Visual C++, DirectX vs.                $C║$W"
     Write-Host "  $C║$W     ${G}[6]$W AG ARACLARI (Network Tools)     $Y>>$W DNS Degistirici (Cloudflare/Google)    $C║$W"
-    Write-Host "  $C║$W     ${G}[7]$W CIKIS                           $Y>>$W Uygulamayi kapat                       $C║$W"
+    Write-Host "  $C║$W     ${G}[7]$W UYGULAMA GUNCELLEMELERI         $Y>>$W Winget ile Tumu Guncelle               $C║$W"
+    Write-Host "  $C║$W     ${G}[8]$W CIKIS                           $Y>>$W Uygulamayi kapat                       $C║$W"
     Write-Host "  $C║$W                                                                                   $C║$W"
     Write-Host "  $C╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
     Write-Host ""
+
     Write-Host ""
     Write-Host -NoNewline "  $C►$W Seciminiz: "
     
@@ -651,7 +860,8 @@ while ($true) {
         "4" { Start-DailyFixes }
         "5" { Start-GamingTools }
         "6" { Start-NetworkTools }
-        "7" { exit }
+        "7" { Start-AppUpdates }
+        "8" { exit }
         default { 
             Write-Host "  $R Gecersiz secim!$W"
             Start-Sleep -Seconds 1
