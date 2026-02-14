@@ -16,7 +16,7 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 $UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 
 # 3. YAPILANDIRMA
-$CURRENT_VER = "1.3" 
+$CURRENT_VER = "1.4" 
 # Not: Versiyon kontrol URL'lerini orijinal dosyalardan aldım, gerekirse güncelleyin.
 $URL_VERSION = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/version.txt"
 $URL_SCRIPT = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/UDYRYZN_ULTIMATE_REPAIR.ps1"
@@ -210,7 +210,8 @@ function Start-DeepRepair {
     # .ps1 dosyasındaki "Deep Repair" mantığı
     
     # İlerleme Çubuğu Fonksiyonu (Local scope)
-    $TOTAL_OPS = 7
+    # İlerleme Çubuğu Fonksiyonu (Local scope)
+    $TOTAL_OPS = 8
     function Show-Progress {
         param($OpNum)
         $percent = [math]::Round(($OpNum / $TOTAL_OPS) * 100)
@@ -292,7 +293,32 @@ function Start-DeepRepair {
     }
     Write-Host ""
 
+    # [08] DISK DUZELTME (CHKDSK)
+    Show-Progress 7
+    Write-Host "  $P$PAD_TXT[08]$W $C DISK HATALARI ONARIMI (CHKDSK)$W"
+    Write-Host "  $PAD_SUB Sistem surucusu icin onarim planlaniyor..."
+    
+    # CHKDSK planla (Y tusu otomatik gonderilir)
+    try {
+        Write-Output "y" | chkdsk /f /r c: | Out-Null
+        Write-Host "  $PAD_SUB Disk onarimi bir sonraki baslangica ayarlandi ${G}[DONE]$W"
+        $script:SuccessCount++
+    }
+    catch {
+        Write-Host "  $R HATA: CHKDSK planlanamadi! Yonetici olarak calistiginizdan emin olun.$W"
+    }
+    Write-Host ""
+
     Write-Host "  $G✓ DERIN ONARIM TAMAMLANDI!$W"
+    Write-Host ""
+    
+    Write-Host "  $($R)╔═══════════════════════════════════════════════════════════════════════════════════╗$($W)"
+    Write-Host "  $($R)║$($W)                                                                                   $($R)║$($W)"
+    Write-Host "  $($R)║$($W)   $($Y)DIKKAT: $($R)DISK MODULU VE SISTEM DUZELTMELERININ TAM OLARAK ETKI EDEBILMESI ICIN$($R)   ║$($W)"
+    Write-Host "  $($R)║$($W)               $($R)LUTFEN BILGISAYARINIZI YENIDEN BASLATINIZ. (RESTART)                $($R)║$($W)"
+    Write-Host "  $($R)║$($W)                                                                                   $($R)║$($W)"
+    Write-Host "  $($R)╚═══════════════════════════════════════════════════════════════════════════════════╝$($W)"
+    
     Write-Host ""
     Read-Host "  Ana menuye donmek icin Enter'a basin..."
 }
@@ -513,6 +539,87 @@ function Start-GamingTools {
     }
 }
 
+function Start-NetworkTools {
+    $ResultMsg = ""
+    while ($true) {
+        Show-Header
+        Write-Host "  $C╔═══════════════════════════════════════════════════════════════════════════════════╗$W"
+        Write-Host "  $C║$W                       $Y🌐  AG ARACLARI (Network Tools)$W                             $C║$W"
+        Write-Host "  $C╠═══════════════════════════════════════════════════════════════════════════════════╣$W"
+        Write-Host "  $C║$W                                                                                   $C║$W"
+        Write-Host "  $C║$W     ${G}[1]$W Cloudflare DNS (1.1.1.1)    $Y>>$W Hizli, Guvenli ve Gizlilik Odakli          $C║$W"
+        Write-Host "  $C║$W     ${G}[2]$W Google DNS (8.8.8.8)        $Y>>$W Standart ve Guvenilir                      $C║$W"
+        Write-Host "  $C║$W     ${G}[3]$W Otomatik DNS (DHCP)         $Y>>$W Varsayilan ISP Ayarlari (Sifirla)          $C║$W"
+        Write-Host "  $C║$W     ${G}[4]$W Ag Onbellegini Temizle      $Y>>$W Flush DNS, Renew IP, Reset Winsock         $C║$W"
+        Write-Host "  $C║$W     ${R}[0]$W Geri Don                                                                      $C║$W"
+        Write-Host "  $C║$W                                                                                   $C║$W"
+        Write-Host "  $C╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
+        Write-Host ""
+        
+        if ($ResultMsg -ne "") {
+            Write-Host "  $ResultMsg"
+            Write-Host ""
+            $ResultMsg = ""
+        }
+
+        # Mevcut DNS Bilgisi
+        $CurrentDNS = Get-DnsClientServerAddress -AddressFamily IPv4 | Where-Object { $_.ServerAddresses } | Select-Object -ExpandProperty ServerAddresses -Unique
+        if ($CurrentDNS) {
+            Write-Host "  $P Mevcut DNS Sunuculari:$W $($CurrentDNS -join ', ')"
+        }
+        else {
+            Write-Host "  $P Mevcut DNS Sunuculari:$W (Otomatik/Bulunamadi)"
+        }
+        Write-Host ""
+
+        Write-Host -NoNewline "  $C►$W Seciminiz: "
+        
+        $nwMenu = Read-Host
+        
+        switch ($nwMenu) {
+            "1" {
+                Write-Host "  $Y Cloudflare DNS ayarlaniyor...$W"
+                try {
+                    Get-NetAdapter | Where-Object { $_.Status -eq "Up" } | Set-DnsClientServerAddress -ServerAddresses ("1.1.1.1", "1.0.0.1") -ErrorAction Stop
+                    $ResultMsg = "$G✓ Cloudflare DNS (1.1.1.1) basariyla uygulandi!$W"
+                }
+                catch {
+                    $ResultMsg = "$R HATA: DNS degistirilemedi. Yonetici oldugunuzdan emin olun.$W"
+                }
+            }
+            "2" {
+                Write-Host "  $Y Google DNS ayarlaniyor...$W"
+                try {
+                    Get-NetAdapter | Where-Object { $_.Status -eq "Up" } | Set-DnsClientServerAddress -ServerAddresses ("8.8.8.8", "8.8.4.4") -ErrorAction Stop
+                    $ResultMsg = "$G✓ Google DNS (8.8.8.8) basariyla uygulandi!$W"
+                }
+                catch {
+                    $ResultMsg = "$R HATA: DNS degistirilemedi. Yonetici oldugunuzdan emin olun.$W"
+                }
+            }
+            "3" {
+                Write-Host "  $Y Otomatik DNS (DHCP) ayarlarina donuluyor...$W"
+                try {
+                    Get-NetAdapter | Where-Object { $_.Status -eq "Up" } | Set-DnsClientServerAddress -ResetServerAddresses -ErrorAction Stop
+                    $ResultMsg = "$G✓ DNS ayarlari sifirlandi (Otomatik/DHCP)!$W"
+                }
+                catch {
+                    $ResultMsg = "$R HATA: DNS sifirlanamadi. Yonetici oldugunuzdan emin olun.$W"
+                }
+            }
+            "4" {
+                Write-Host "  $Y Ag bilesenleri sifirlaniyor (Flush, Renew, Reset)...$W"
+                ipconfig /flushdns | Out-Null
+                ipconfig /release | Out-Null
+                ipconfig /renew | Out-Null
+                netsh winsock reset | Out-Null
+                $ResultMsg = "$G✓ Ag onbellegi ve ayarlari temizlendi!$W"
+            }
+            "0" { return }
+        }
+    }
+}
+
 # 6. ANA DONGU (MAIN LOOP)
 
 while ($true) {
@@ -527,7 +634,8 @@ while ($true) {
     Write-Host "  $C║$W     ${G}[3]$W EKSTRA ARACLAR                  $Y>>$W Disk ve Update araclari                $C║$W"
     Write-Host "  $C║$W     ${G}[4]$W GUNDELIK SORUN COZUCU           $Y>>$W Wifi, Yazici, Pil, Store vs.           $C║$W"
     Write-Host "  $C║$W     ${G}[5]$W OYUN ARACLARI (Gaming Tools)    $Y>>$W Visual C++, DirectX vs.                $C║$W"
-    Write-Host "  $C║$W     ${G}[6]$W CIKIS                           $Y>>$W Uygulamayi kapat                       $C║$W"
+    Write-Host "  $C║$W     ${G}[6]$W AG ARACLARI (Network Tools)     $Y>>$W DNS Degistirici (Cloudflare/Google)    $C║$W"
+    Write-Host "  $C║$W     ${G}[7]$W CIKIS                           $Y>>$W Uygulamayi kapat                       $C║$W"
     Write-Host "  $C║$W                                                                                   $C║$W"
     Write-Host "  $C╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
     Write-Host ""
@@ -542,7 +650,8 @@ while ($true) {
         "3" { Start-ExtraTools }
         "4" { Start-DailyFixes }
         "5" { Start-GamingTools }
-        "6" { exit }
+        "6" { Start-NetworkTools }
+        "7" { exit }
         default { 
             Write-Host "  $R Gecersiz secim!$W"
             Start-Sleep -Seconds 1
