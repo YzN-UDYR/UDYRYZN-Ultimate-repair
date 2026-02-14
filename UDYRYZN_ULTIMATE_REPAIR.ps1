@@ -701,8 +701,15 @@ function Start-AppUpdates {
                 $pkgId = $pkg.Id
                 $pVer = $pkg.Version
                 
-                # Boyut bilgisi (Simulasyon/Placeholder - Winget hizli vermedigi icin)
-                Write-Host "  $Y ► $pName $W($C$pVer$W) Guncelleniyor... [Boyut: Hesaplaniyor...]"
+                # Uzun isimleri kisalt (UI tasmamasi icin)
+                if ($pName.Length -gt 35) {
+                    $pNameDisplay = $pName.Substring(0, 32) + "..."
+                }
+                else {
+                    $pNameDisplay = $pName
+                }
+                
+                Write-Host "  $Y ► $pNameDisplay $W($C$pVer$W) Guncelleniyor... " -NoNewline
                 
                 # Job baslat
                 $job = Start-Job -ScriptBlock {
