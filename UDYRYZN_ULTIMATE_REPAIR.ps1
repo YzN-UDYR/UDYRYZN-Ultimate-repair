@@ -16,7 +16,7 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 $UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 
 # 3. YAPILANDIRMA
-$CURRENT_VER = "1.5" 
+$CURRENT_VER = "1.6" 
 # Not: Versiyon kontrol URL'lerini orijinal dosyalardan aldım, gerekirse güncelleyin.
 $URL_VERSION = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/version.txt"
 $URL_SCRIPT = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/UDYRYZN_ULTIMATE_REPAIR.ps1"
@@ -831,6 +831,80 @@ function Start-NetworkTools {
         }
     }
 }
+
+function Enable-UltimatePerformance {
+    Show-Header
+    Write-Host "  $C╔═══════════════════════════════════════════════════════════════════════════════════╗$W"
+    Write-Host "  $C║$W              $Y⚡  NIHAI PERFORMANS (ULTIMATE PERFORMANCE) MODU$W                   $C║$W"
+    Write-Host "  $C╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
+    Write-Host ""
+    
+    Write-Host "  $Y Sistemdeki Guc Planlari taraniyor...$W"
+    
+    # Hedeflenenin sablon GUID'si (Windows default)
+    $templateGuid = "e9a42b02-d5df-448d-aa00-03f14749eb61"
+    
+    # 1. Mevcut planlari listele ve "Ultimate/Nihai" olani bul
+    $listOutput = powercfg /list
+    $targetGuid = $null
+    
+    # Regex ile GUID yakala. Isim onemli degil, GUID sablonuna bakacagiz veya ismi "Ultimate" olan satiri.
+    # Ancak kopya olusturulunca GUID degisir. Isim uzerinden gitmek en garantisi (tr/en).
+    
+    foreach ($line in ($listOutput -split "`r`n")) {
+        if ($line -match "Ultimate Performance" -or $line -match "Nihai Performans") {
+            # GUID'yi cek (Satir basi: GUID: XXXXX...)
+            if ($line -match "([a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12})") {
+                $targetGuid = $matches[0]
+                break
+            }
+        }
+    }
+    
+    # 2. Eger bulunamadiysa olustur
+    if (-not $targetGuid) {
+        Write-Host "  $P Mod henüz eklenmemis. Kilit aciliyor...$W"
+        # Kopya olustur
+        powercfg -duplicatescheme $templateGuid | Out-Null
+        
+        # Tekrar tara (Yeni GUID'yi bulmak icin)
+        $listOutput = powercfg /list
+        foreach ($line in ($listOutput -split "`r`n")) {
+            if ($line -match "Ultimate Performance" -or $line -match "Nihai Performans") {
+                if ($line -match "([a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12})") {
+                    $targetGuid = $matches[0]
+                    break
+                }
+            }
+        }
+    }
+    else {
+        Write-Host "  $P Mod zaten mevcut ($targetGuid).$W"
+    }
+    
+    # 3. Aktiflestir
+    if ($targetGuid) {
+        Write-Host "  $Y Mod aktiflestiriliyor...$W"
+        powercfg /setactive $targetGuid
+        
+        Start-Sleep -Seconds 1
+        $current = powercfg /getactivescheme
+        if ($current -match $targetGuid) {
+            Write-Host "  $G ✓ NIHAI PERFORMANS MODU AKTIFLESTIRILDI!$W"
+        }
+        else {
+            Write-Host "  $R Hata: Mod aktiflestirilemedi. Lutfen manuel deneyin.$W"
+            Write-Host "  Guid: $targetGuid"
+        }
+    }
+    else {
+        Write-Host "  $R Hata: Mod olusturulamadi veya GUID bulunamadi.$W"
+        Write-Host "  Sisteminiz bu modu desteklemiyor olabilir."
+    }
+    Write-Host ""
+    Read-Host "  Devam etmek icin Enter'a basin..."
+}
+
 
 # 6. ANA DONGU (MAIN LOOP)
 
