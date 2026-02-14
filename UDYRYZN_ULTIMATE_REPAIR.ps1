@@ -16,7 +16,7 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 $UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 
 # 3. YAPILANDIRMA
-$CURRENT_VER = "1.4" 
+$CURRENT_VER = "1.5" 
 # Not: Versiyon kontrol URL'lerini orijinal dosyalardan aldım, gerekirse güncelleyin.
 $URL_VERSION = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/version.txt"
 $URL_SCRIPT = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/UDYRYZN_ULTIMATE_REPAIR.ps1"
@@ -539,10 +539,7 @@ function Start-DailyFixes {
                 Start-Sleep -Seconds 2
             }
             "6" {
-                Write-Host "  $Y Nihai Performans (Ultimate Performance) modu kilidi aciliyor...$W"
-                powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 | Out-Null
-                Write-Host "  $G Guc planlarina 'Nihai Performans' eklendi. Guc seceneklerinden aktif edebilirsiniz.$W"
-                Start-Sleep -Seconds 3
+                Enable-UltimatePerformance
             }
             "7" {
                 Write-Host "  $Y DNS Onbellegi temizleniyor...$W"
@@ -573,6 +570,7 @@ function Start-GamingTools {
         Write-Host "  $C║$W                                                                                   $C║$W"
         Write-Host "  $C║$W     ${G}[1]$W Visual C++ Redistributable (2005-2022) [Tumu - x86/x64]                   $C║$W"
         Write-Host "  $C║$W     ${G}[2]$W DirectX Web Installer (Guncel DirectX Surumleri)                          $C║$W"
+        Write-Host "  $C║$W     ${G}[3]$W Nihai Performans (Ultimate Performance) Modu                              $C║$W"
         Write-Host "  $C║$W     ${R}[0]$W Geri Don                                                                  $C║$W"
         Write-Host "  $C║$W                                                                                   $C║$W"
         Write-Host "  $C╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
