@@ -16,7 +16,7 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 $UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 
 # 3. YAPILANDIRMA
-$CURRENT_VER = "1.2" 
+$CURRENT_VER = "1.3" 
 # Not: Versiyon kontrol URL'lerini orijinal dosyalardan aldım, gerekirse güncelleyin.
 $URL_VERSION = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/version.txt"
 $URL_SCRIPT = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/UDYRYZN_ULTIMATE_REPAIR.ps1"
@@ -434,6 +434,85 @@ function Start-DailyFixes {
     }
 }
 
+
+function Start-GamingTools {
+    $ResultMsg = ""
+    while ($true) {
+        Show-Header
+        Write-Host "  $C╔═══════════════════════════════════════════════════════════════════════════════════╗$W"
+        Write-Host "  $C║$W                       $Y🎮  OYUN ARACLARI (Gaming Tools)$W                            $C║$W"
+        Write-Host "  $C╠═══════════════════════════════════════════════════════════════════════════════════╣$W"
+        Write-Host "  $C║$W                                                                                   $C║$W"
+        Write-Host "  $C║$W     ${G}[1]$W Visual C++ Redistributable (2005-2022) [Tumu - x86/x64]                   $C║$W"
+        Write-Host "  $C║$W     ${G}[2]$W DirectX Web Installer (Guncel DirectX Surumleri)                          $C║$W"
+        Write-Host "  $C║$W     ${R}[0]$W Geri Don                                                                  $C║$W"
+        Write-Host "  $C║$W                                                                                   $C║$W"
+        Write-Host "  $C╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
+        Write-Host ""
+        
+        if ($ResultMsg -ne "") {
+            Write-Host "  $ResultMsg"
+            Write-Host ""
+            $ResultMsg = ""
+        }
+
+        Write-Host -NoNewline "  $C►$W Seciminiz: "
+        
+        $gmMenu = Read-Host
+        
+        switch ($gmMenu) {
+            "1" {
+                Write-Host "  $Y Visual C++ Paketleri kontrol ediliyor ve yukleniyor...$W"
+                Write-Host "  $Y Bu islem paketlerin indirilmesi ve kurulmasi nedeniyle zaman alabilir.$W"
+                
+                if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+                    Write-Host "  $R 'winget' (App Installer) bulunamadi! Lutfen Windows Store'dan yukleyin.$W"
+                    Start-Sleep -Seconds 3
+                    break
+                }
+
+                $vcPackages = @(
+                    "Microsoft.VCRedist.2005.x86", "Microsoft.VCRedist.2005.x64",
+                    "Microsoft.VCRedist.2008.x86", "Microsoft.VCRedist.2008.x64",
+                    "Microsoft.VCRedist.2010.x86", "Microsoft.VCRedist.2010.x64",
+                    "Microsoft.VCRedist.2012.x86", "Microsoft.VCRedist.2012.x64",
+                    "Microsoft.VCRedist.2013.x86", "Microsoft.VCRedist.2013.x64",
+                    "Microsoft.VCRedist.2015+.x86", "Microsoft.VCRedist.2015+.x64"
+                )
+
+                foreach ($pkgId in $vcPackages) {
+                    Write-Host -NoNewline "  $PAD_SUB Yukleniyor: $pkgId ... "
+                    try {
+                        winget install --id $pkgId --silent --accept-package-agreements --accept-source-agreements --force | Out-Null
+                        Write-Host "${G}[OK]$W"
+                    }
+                    catch {
+                        Write-Host "${R}[ERR]$W (Belki zaten yukludur)"
+                    }
+                }
+                $ResultMsg = "$G✓ Visual C++ Redistributable paketlerinin kurulumu basariyla tamamlandi!$W"
+            }
+            "2" {
+                Write-Host "  $Y DirectX Web Installer indiriliyor...$W"
+                $dxUrl = "https://download.microsoft.com/download/1/7/1/1718CCC4-6315-4D8E-9543-8E28A4E18C4C/dxwebsetup.exe"
+                $dxPath = "$env:TEMP\dxwebsetup.exe"
+                
+                try {
+                    Invoke-WebRequest -Uri $dxUrl -OutFile $dxPath -UseBasicParsing
+                    Write-Host "  $G Indirme basarili! Kurulum baslatiliyor...$W"
+                    Start-Process -FilePath $dxPath -Wait
+                    $ResultMsg = "$G✓ DirectX Web Installer islemi tamamlandi!$W"
+                }
+                catch {
+                    Write-Host "  $R Indirme hatasi! Internet baglantinizi kontrol edin.$W"
+                    Start-Sleep -Seconds 2
+                }
+            }
+            "0" { return }
+        }
+    }
+}
+
 # 6. ANA DONGU (MAIN LOOP)
 
 while ($true) {
@@ -447,7 +526,8 @@ while ($true) {
     Write-Host "  $C║$W     ${G}[2]$W DERIN ONARIM (Deep Repair)      $Y>>$W SFC, DISM, Sistem Onarimi              $C║$W"
     Write-Host "  $C║$W     ${G}[3]$W EKSTRA ARACLAR                  $Y>>$W Disk ve Update araclari                $C║$W"
     Write-Host "  $C║$W     ${G}[4]$W GUNDELIK SORUN COZUCU           $Y>>$W Wifi, Yazici, Pil, Store vs.           $C║$W"
-    Write-Host "  $C║$W     ${G}[5]$W CIKIS                           $Y>>$W Uygulamayi kapat                       $C║$W"
+    Write-Host "  $C║$W     ${G}[5]$W OYUN ARACLARI (Gaming Tools)    $Y>>$W Visual C++, DirectX vs.                $C║$W"
+    Write-Host "  $C║$W     ${G}[6]$W CIKIS                           $Y>>$W Uygulamayi kapat                       $C║$W"
     Write-Host "  $C║$W                                                                                   $C║$W"
     Write-Host "  $C╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
     Write-Host ""
@@ -461,7 +541,8 @@ while ($true) {
         "2" { Start-DeepRepair }
         "3" { Start-ExtraTools }
         "4" { Start-DailyFixes }
-        "5" { exit }
+        "5" { Start-GamingTools }
+        "6" { exit }
         default { 
             Write-Host "  $R Gecersiz secim!$W"
             Start-Sleep -Seconds 1
