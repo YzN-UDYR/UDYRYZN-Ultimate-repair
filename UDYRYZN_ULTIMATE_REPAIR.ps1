@@ -16,7 +16,7 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 $UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 
 # 3. YAPILANDIRMA
-$CURRENT_VER = "1.7" 
+$CURRENT_VER = "2.0" 
 # Not: Versiyon kontrol URL'lerini orijinal dosyalardan aldım, gerekirse güncelleyin.
 $URL_VERSION = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/version.txt"
 $URL_SCRIPT = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/UDYRYZN_ULTIMATE_REPAIR.ps1"
@@ -864,6 +864,599 @@ function Enable-UltimatePerformance {
 }
 
 
+
+function Start-PCExpertMode {
+    while ($true) {
+        Show-Header
+        Write-Host "  $C╔═══════════════════════════════════════════════════════════════════════════════════╗$W"
+        Write-Host "  $C║$W               $Y🕵️  PC EXPERT MODU (ALIM/SATIM KONTROLCUSU)$W                         $C║$W"
+        Write-Host "  $C╠═══════════════════════════════════════════════════════════════════════════════════╣$W"
+        Write-Host "  $C║$W                                                                                   $C║$W"
+        Write-Host "  $C║$W     ${G}[1]$W Donanim Dedektifi (Hardware Info)   $Y>>$W RAM/SSD/CPU Gercek Detaylari       $C║$W"
+        Write-Host "  $C║$W     ${G}[2]$W Olu Piksel Testi (Pixel Check)      $Y>>$W Ekrani Renk Testine Sokar          $C║$W"
+        Write-Host "  $C║$W     ${G}[3]$W Pil Sagligi & Lisans Durumu         $Y>>$W Batarya Omru ve Windows Lisansi    $C║$W"
+        Write-Host "  $C║$W     ${G}[4]$W Klavye Tus Testi (Keyboard Test)    $Y>>$W Basilan Tuslari Ekrana Yazar       $C║$W"
+        Write-Host "  $C║$W     ${G}[5]$W CPU Stress Testi (Stabilite)        $Y>>$W 30 Saniyelik Yuk Testi             $C║$W"
+        Write-Host "  $C║$W     ${G}[6]$W WinSAT Performans Puani             $Y>>$W Windows Puanlama & Siniflandirma   $C║$W"
+        Write-Host "  $C║$W     ${G}[7]$W Ses & Hoparlor Testi                $Y>>$W Sag/Sol Ses Testi                  $C║$W"
+        Write-Host "  $C║$W     ${G}[8]$W Ag & Internet Stabilite Testi       $Y>>$W Paket Kaybi (Loss) Analizi         $C║$W"
+        Write-Host "  $C║$W     ${G}[9]$W EKSPERTIZ RAPORU OLUSTUR (.TXT)     $Y>>$W Tum Bilgileri Masaustune Kaydet    $C║$W"
+        Write-Host "  $C║$W     ${G}[A]$W Mavi Ekran (BSOD) Gecmisi           $Y>>$W Sistemin Cokme Kayitlari (BugCheck)$C║$W"
+        Write-Host "  $C║$W     ${G}[B]$W USB Baglantilari & Portlar          $Y>>$W Takili Cihazlari Listele           $C║$W"
+        Write-Host "  $C║$W     ${G}[C]$W Kamera Testi (Webcam)               $Y>>$W Windows Kamera Uygulamasini Acar   $C║$W"
+        Write-Host "  $C║$W     ${R}[0]$W Geri Don                                                                  $C║$W"
+        Write-Host "  $C║$W                                                                                   $C║$W"
+        Write-Host "  $C╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
+        Write-Host ""
+        Write-Host -NoNewline "  $C►$W Seciminiz: "
+        
+        $exMenu = Read-Host
+        
+        switch ($exMenu) {
+            "1" {
+                Show-Header
+                Write-Host "  $Y[ANALIZ] Donanim detaylari toplaniyor...$W"
+                Write-Host "  $P(NOT: Bu bilgiler donanimin kendine ait kimlik kartindan alinir.$W"
+                Write-Host "  $P Cin mali sahte urunler (Fake GPU/RAM/SSD) kendilerini orjinal gibi gosterebilir.$W"
+                Write-Host "  $P Supheli durumlarda 'Performans Testi' yapmaniz onerilir.)$W"
+                Write-Host ""
+
+                # CPU
+                $cpu = Get-CimInstance Win32_Processor
+                Write-Host "  $C--- ISLEMCI (CPU) ---$W"
+                Write-Host "  $G Model      :$W $($cpu.Name)"
+                Write-Host "  $G ID         :$W $($cpu.ProcessorId)"
+                Write-Host "  $G Cekirdek   :$W $($cpu.NumberOfCores) Core / $($cpu.NumberOfLogicalProcessors) Thread"
+                Write-Host "  $G Hiz (Anlik):$W $($cpu.CurrentClockSpeed) MHz (Max: $($cpu.MaxClockSpeed) MHz)"
+                Write-Host ""
+
+                # RAM
+                $memArray = Get-CimInstance Win32_PhysicalMemoryArray
+                $totalSlots = 0; if ($memArray) { $memArray | ForEach-Object { $totalSlots += $_.MemoryDevices } }
+                $rams = @(Get-CimInstance Win32_PhysicalMemory) # Force Array
+                $usedSlots = $rams.Count
+                
+                # Fallback if totalSlots is wrong (e.g. 0)
+                if ($totalSlots -lt $usedSlots) { $totalSlots = $usedSlots }
+                
+                $freeSlots = $totalSlots - $usedSlots
+                
+                Write-Host "  $C--- BELLEK (RAM) ---$W"
+                Write-Host "  $Y Slot Durumu: $usedSlots / $totalSlots Dolu ($freeSlots Bos Slot Var)$W"
+                foreach ($ram in $rams) {
+                    $gb = [math]::Round($ram.Capacity / 1GB, 1)
+                    $totalRam += $gb
+                    $manuf = $ram.Manufacturer.Trim()
+                    $part = $ram.PartNumber.Trim()
+                    
+                    # Fake RAM Check Heuristic
+                    $status = "$G✓$W"
+                    if ($manuf -match "Unknown" -or $manuf -eq "0000" -or $part -match "Unknown") {
+                        $status = "$R⚠ SUPHELI (Markasiz/OEM)$W"
+                    }
+                    
+                    Write-Host "  $G Slot      :$W $gb GB | $($ram.Speed) MHz | $manuf | $part $status"
+                }
+                Write-Host "  $Y Toplam RAM :$W $totalRam GB"
+                Write-Host ""
+
+                # GPU
+                Write-Host "  $C--- EKRAN KARTI (GPU) ---$W"
+                $gpus = Get-CimInstance Win32_VideoController
+                foreach ($gpu in $gpus) {
+                    Write-Host "  $G Kart       :$W $($gpu.Name)"
+                    Write-Host "  $G Surucu     :$W $($gpu.DriverVersion)"
+                    Write-Host "  $G VRAM       :$W $([math]::Round($gpu.AdapterRAM / 1GB, 1)) GB (Tahmini)"
+                    Write-Host "  $G Cozunurluk :$W $($gpu.CurrentHorizontalResolution)x$($gpu.CurrentVerticalResolution) @ $($gpu.CurrentRefreshRate)Hz"
+                }
+                Write-Host ""
+
+                # DISK
+                Write-Host "  $C--- DEPOLAMA (DISK/SSD) ---$W"
+                $disks = Get-PhysicalDisk | Sort-Object MediaType
+                foreach ($disk in $disks) {
+                    $sizeGB = [math]::Round($disk.Size / 1GB, 0)
+                    $health = if ($disk.HealthStatus -eq "Healthy") { "$G✓ Saglam$W" } else { "$R⚠ RISKLI!$W" }
+                    Write-Host "  $G Model      :$W $($disk.FriendlyName)"
+                    Write-Host "  $G Tur/Boyut  :$W $($disk.MediaType) / $sizeGB GB"
+                    Write-Host "  $G Seri No    :$W $($disk.SerialNumber)"
+                    Write-Host "  $G Saglik     :$W $health (Durum: $($disk.OperationalStatus))"
+                    
+                    if ($disk.MediaType -eq "SSD" -or $disk.MediaType -eq "NVMe") {
+                        Write-Host "  $P (SSD Hiz Testi icin anamenuden speed test yapilabilir)$W"
+                    }
+                    Write-Host "  $P --------------------------- $W"
+                }
+
+                # EXPANSION SLOTS
+                Write-Host ""
+                Write-Host "  $C--- GENISLEME YUVALARI (BETA) ---$W"
+                try {
+                    $slots = Get-CimInstance Win32_SystemSlot -ErrorAction SilentlyContinue | Where-Object { $_.SlotDesignation -match "M.2|PCI|SSD|NVMe" }
+                    if ($slots) {
+                        foreach ($slot in $slots) {
+                            $status = if ($slot.CurrentUsage -eq 3) { "$G[BOS/KULLANILABILIR]$W" } elseif ($slot.CurrentUsage -eq 4) { "$R[DOLU/KULLANIMDA]$W" } else { "$Y[BILINMIYOR]$W" }
+                            Write-Host "  $Y Slot: $($slot.SlotDesignation) - $status"
+                        }
+                    }
+                    else {
+                        Write-Host "  $P Anakart slot bilgisi okunamadi (Masaustu sistemlerde daha iyi calisir).$W"
+                    }
+                }
+                catch { Write-Host "  $P Slot bilgisine erisilemedi.$W" }
+
+                Write-Host ""
+                Read-Host "  Devam etmek icin Enter'a basin..."
+            }
+            "2" {
+                Add-Type -AssemblyName System.Windows.Forms
+                Add-Type -AssemblyName System.Drawing
+                
+                $form = New-Object System.Windows.Forms.Form
+                $form.FormBorderStyle = "None"
+                $form.WindowState = "Maximized"
+                $form.TopMost = $true
+                $form.Cursor = [System.Windows.Forms.Cursors]::Hand
+                
+                $colors = @([System.Drawing.Color]::Red, [System.Drawing.Color]::Green, [System.Drawing.Color]::Blue, [System.Drawing.Color]::White, [System.Drawing.Color]::Black)
+                $msg = "TIKLA: Renk Degistir | ESC: Cikis"
+                
+                $script:colorIdx = 0
+                $form.BackColor = $colors[$script:colorIdx]
+
+                $label = New-Object System.Windows.Forms.Label
+                $label.Text = $msg
+                $label.Font = New-Object System.Drawing.Font("Arial", 20)
+                $label.ForeColor = [System.Drawing.Color]::White
+                $label.AutoSize = $true
+                $label.Location = New-Object System.Drawing.Point(50, 50)
+                $form.Controls.Add($label)
+
+                $form.Add_Click({
+                        $script:colorIdx++
+                        if ($script:colorIdx -ge $colors.Count) { $script:colorIdx = 0 }
+                        $form.BackColor = $colors[$script:colorIdx]
+                        if ($form.BackColor -eq [System.Drawing.Color]::White) { $label.ForeColor = [System.Drawing.Color]::Black } else { $label.ForeColor = [System.Drawing.Color]::White }
+                    })
+
+                $form.Add_KeyDown({
+                        if ($_.KeyCode -eq "Escape") { $form.Close() }
+                    })
+                
+                $form.ShowDialog() | Out-Null
+            }
+            "3" {
+                Show-Header
+                Write-Host "  $C--- PIL SAGLIGI (Laptop) ---$W"
+                try {
+                    $battery = Get-WmiObject -Class Win32_Battery -ErrorAction Stop
+                    $report = "powercfg /batteryreport /output `"$env:TEMP\bat_report.xml`" /xml"
+                    Invoke-Expression $report | Out-Null
+                    
+                    if (Test-Path "$env:TEMP\bat_report.xml") {
+                        [xml]$xml = Get-Content "$env:TEMP\bat_report.xml"
+                        $design = $xml.BatteryReport.Batteries.Battery.DesignCapacity
+                        $full = $xml.BatteryReport.Batteries.Battery.FullChargeCapacity
+                        
+                        if ($design -and $full) {
+                            $health = [math]::Round(($full / $design) * 100, 1)
+                            Write-Host "  $G Fabrika Kapasitesi :$W $design mWh"
+                            Write-Host "  $G Mevcut Kapasite    :$W $full mWh"
+                            Write-Host "  $Y Pil Sagligi        :$W %$health"
+                            
+                            if ($health -lt 70) { Write-Host "  $R ⚠ PIL OMRUNU TAMAMLAMAK UZERE!$W" }
+                            elseif ($health -gt 90) { Write-Host "  $G ✓ PIL DURUMU MUKEMMEL$W" }
+                        }
+                        else {
+                            Write-Host "  $Y Detayli pil verisi okunamadi (Masaustu olabilir).$W"
+                        }
+                    }
+                }
+                catch {
+                    Write-Host "  $Y Pil bulunamadi veya erisilemedi (Masaustu PC olabilir).$W"
+                }
+
+                Write-Host ""
+                Write-Host "  $C--- WINDOWS LISANS DURUMU ---$W"
+                
+                # Check 1: Activation Status
+                $lic = Get-CimInstance SoftwareLicensingProduct | Where-Object { $_.PartialProductKey -and $_.Name -like "*Windows*" } | Select-Object -First 1
+                if ($lic) {
+                    Write-Host "  $G Lisans Turu :$W $($lic.Name)"
+                    $status = "Lisanssiz/Sorunlu"; if ($lic.LicenseStatus -eq 1) { $status = "LISANSLI (Aktif)" }
+                    Write-Host "  $G Durum       :$W $status"
+                     
+                    $desc = $lic.Description
+                    if ($desc -match "VOLUME_KMSCLIENT") { 
+                        Write-Host "  $R ⚠ DIKKAT: KMS ILE ETKINLESTIRILMIS!$W" 
+                        Write-Host "  $R (Bu bilgisayar muhtemelen sirket bilgisayari veya CRACK (KMS) yapilmis.)$W"
+                    }
+                    elseif ($desc -match "OEM") { Write-Host "  $G ✓ OEM LISANS (Anakarta Gomulu - Orijinal/Guvenli)$W" }
+                    elseif ($desc -match "RETAIL") { Write-Host "  $G ✓ RETAIL LISANS (Bireysel Satin Alinmis - Orijinal/Guvenli)$W" }
+                    else { Write-Host "  $Y Lisans Detayi: $desc $W" }
+                }
+                
+                # Check 2: Expiration Date (KMS usually expires in 180 days)
+                $exp = Get-CimInstance SoftwareLicensingProduct | Where-Object { $_.PartialProductKey -and $_.LicenseStatus -eq 1 } | Select-Object -First 1
+                if ($exp.GracePeriodRemaining -gt 0) {
+                    $daysLeft = [math]::Round($exp.GracePeriodRemaining / 1440, 0) # minutes to days
+                    if ($daysLeft -lt 180 -and $desc -match "VOLUME") {
+                        Write-Host "  $Y Lisans Suresi :$W $daysLeft gun sonra yenileme gerekecek (KMS dongusu).$W"
+                    }
+                }
+
+                Write-Host ""
+                Read-Host "  Devam etmek icin Enter'a basin..."
+            }
+            "4" {
+                Clear-Host
+                Write-Host "  $Y--- KLAVYE TEST MODU ---$W"
+                Write-Host "  $C Calistigini gormek istediginiz tusa basin.$W"
+                Write-Host "  $R Cikmak icin ESC tusuna basin.$W"
+                Write-Host ""
+                
+                try {
+                    $host.UI.RawUI.FlushInputBuffer()
+                    while ($true) {
+                        if ($host.UI.RawUI.KeyAvailable) {
+                            $key = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+                            if ($key.VirtualKeyCode -eq 27) { break } # ESC
+                            Write-Host -NoNewline " [$($key.Character) / $($key.VirtualKeyCode)] "
+                        }
+                        Start-Sleep -Milliseconds 20
+                    }
+                }
+                catch { Write-Host "  $R Hata: Bu terminal modu desteklemiyor.$W" }
+                Read-Host ""
+            }
+            "5" {
+                Show-Header
+                Write-Host "  $R ⚠ STRESS TESTI (CPU %100)$W"
+                Write-Host "  Durdurmak icin 'DELETE' veya 'ESC' tusuna basin."
+                Write-Host "  Otomatik Durma: 30 Saniye."
+                
+                $conf = Read-Host "  Baslamak icin Enter'a basin (Iptal: 'H')"
+                if ($conf -ne "H") {
+                    $jobs = @()
+                    $cores = (Get-CimInstance Win32_Processor).NumberOfLogicalProcessors
+                    Write-Host "  $Y Test Baslatiliyor ($cores Thread)...$W"
+                    
+                    # Start Jobs
+                    for ($i = 0; $i -lt $cores; $i++) {
+                        $jobs += Start-Job -ScriptBlock { while ($true) { $r = [math]::Sqrt(123456789.123) } }
+                    }
+                    
+                    $startTime = Get-Date
+                    $duration = 30 # Seconds
+                    
+                    try {
+                        $host.UI.RawUI.FlushInputBuffer()
+                        while ($true) {
+                            $elapsed = (Get-Date) - $startTime
+                            if ($elapsed.TotalSeconds -ge $duration) { 
+                                Write-Host "`n  $G Sure doldu (30sn). Test bitiriliyor...$W"
+                                break 
+                            }
+                            
+                            if ($host.UI.RawUI.KeyAvailable) {
+                                $key = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+                                if ($key.VirtualKeyCode -eq 46 -or $key.VirtualKeyCode -eq 27) {
+                                    # Delete or Esc (46=Del, 27=Esc)
+                                    Write-Host "`n  $R Kullanici tarafindan durduruldu!$W"
+                                    break
+                                }
+                            }
+                            
+                            Write-Host -NoNewline "."
+                            Start-Sleep -Milliseconds 200
+                        }
+                    }
+                    finally {
+                        Stop-Job -Job $jobs -ErrorAction SilentlyContinue
+                        Remove-Job -Job $jobs -ErrorAction SilentlyContinue
+                    }
+                    Write-Host ""
+                    Write-Host "  $G ✓ Test Tamamlandi.$W"
+                }
+                Read-Host "  Devam etmek icin Enter..."
+            }
+            
+            # --- YENI OZELLIKLER ---
+            "6" {
+                Show-Header
+                Write-Host "  $Y[ANALIZ] Windows Performans Puani (WinSAT) okunuyor...$W"
+                try {
+                    $sat = Get-CimInstance Win32_WinSat
+                    if ($sat) {
+                        $score = $sat.WinSPRLevel
+                        Write-Host ""
+                        Write-Host "  $C--- PERFORMANS PUANI (1.0 - 9.9) ---$W"
+                        Write-Host "  $G Genel Puan :$W $score"
+                        Write-Host "  $Y Islemci    :$W $($sat.CPUScore)"
+                        Write-Host "  $Y RAM        :$W $($sat.MemoryScore)"
+                        Write-Host "  $Y Grafik     :$W $($sat.GraphicsScore)"
+                        Write-Host "  $Y Oyun       :$W $($sat.D3DScore)"
+                        Write-Host "  $Y Disk       :$W $($sat.DiskScore)"
+                        
+                        Write-Host ""
+                        Write-Host -NoNewline "  $C► SINIFLANDIRMA:$W "
+                        if ($score -ge 8.0) { Write-Host "$G UST DUZEY OYUN/IS ISTASYONU (Canavar)$W" }
+                        elseif ($score -ge 7.0) { Write-Host "$G GUCLU OYUN/PERFORMANS BILGISAYARI$W" }
+                        elseif ($score -ge 6.0) { Write-Host "$Y ORTA SEVIYE / CASUAL GAMING$W" }
+                        elseif ($score -ge 4.5) { Write-Host "$Y OFIS / MULTIMEDYA STANDART$W" }
+                        else { Write-Host "$R GIRIS SEVIYESI / ESKI CIHAZ$W" }
+                    }
+                    else { Write-Host "  $R WinSAT verisi bulunamadi (Hic calistirilmamis olabilir).$W" }
+                }
+                catch { Write-Host "  $R Hata: Skor okunamadi.$W" }
+                Write-Host ""
+                Read-Host "  Devam etmek icin Enter..."
+            }
+
+            "7" {
+                Show-Header
+                Write-Host "  $C--- SES TESTI ---$W"
+                Write-Host "  Sira ile sesler calinacak. Lutfen dinleyin."
+                Write-Host ""
+                
+                Write-Host -NoNewline "  $Y[1/3] Sistem Sesi (Beep)... $W"
+                [Console]::Beep(500, 300)
+                Start-Sleep -Milliseconds 100
+                [Console]::Beep(1000, 300)
+                Write-Host "$GOK$W"
+                Start-Sleep -Seconds 1
+                
+                try {
+                    Add-Type -AssemblyName System.Speech
+                    $synth = New-Object -TypeName System.Speech.Synthesis.SpeechSynthesizer
+                    
+                    Write-Host -NoNewline "  $Y[2/3] Konusma Testi (Sol/Sag ayrimi icin kulaklik takin)... $W"
+                    $synth.Speak("Testing Audio System")
+                    Write-Host "$GOK$W"
+                }
+                catch { Write-Host "$Y(Konusma motoru yuklenemedi, geciliyor)$W" }
+                
+                Write-Host "  $P (Not: Windows PowerShell uzerinden tam sag/sol ayrimi zordur.$W"
+                Write-Host "  $P  Eger ses net geliyorsa hoparlorler calisiyordur.)$W"
+                Write-Host ""
+                Read-Host "  Devam etmek icin Enter..."
+            }
+
+            "8" {
+                Show-Header
+                Write-Host "  $C--- AG STABILITE TESTI ---$W"
+                Write-Host "  Google ve Cloudflare sunucularina paket gonderiliyor..."
+                Write-Host ""
+                
+                $targets = @("8.8.8.8", "1.1.1.1")
+                foreach ($t in $targets) {
+                    Write-Host -NoNewline "  $Y Hedef: $t ... $W"
+                    try {
+                        $res = Test-Connection -ComputerName $t -Count 10 -ErrorAction SilentlyContinue
+                        if ($res) {
+                            $avg = ($res | Measure-Object -Property ResponseTime -Average).Average
+                            Write-Host "$G BASARILI (Ort. ${avg}ms)$W"
+                            if ($res.Count -lt 10) { 
+                                $loss = 10 - $res.Count
+                                Write-Host "  $R ⚠ DIKKAT: $loss PAKET KAYBI (LOSS) VAR!$W" 
+                            }
+                        }
+                        else { Write-Host "$R ULASILAMIYOR! (Internet yok mu?)$W" }
+                    }
+                    catch { Write-Host "$R HATA$W" }
+                }
+                Write-Host ""
+                Read-Host "  Devam etmek icin Enter..."
+            }
+
+            "9" {
+                Show-Header
+                Write-Host "  $Y[RAPOR] Detayli sistem analizi yapiliyor...$W"
+                $desktop = [Environment]::GetFolderPath("Desktop")
+                $file = "$desktop\PC_Ekspertiz_Raporu_DETAYLI_$(Get-Date -Format 'yyyyMMdd_HHmm').txt"
+                
+                $report = @()
+                $report += "================================================================================="
+                $report += "                    UDYRYZN ULTIMATE REPAIR - DETAYLI EKSPERTIZ RAPORU"
+                $report += "                    Tarih: $(Get-Date)"
+                $report += "================================================================================="
+                $report += ""
+                
+                $report += "[1] SISTEM OZETI"
+                $cs = Get-CimInstance Win32_ComputerSystem
+                $os = Get-CimInstance Win32_OperatingSystem
+                $report += "Bilgisayar Adi : $($cs.Name)"
+                $report += "Kullanici      : $($cs.PrimaryOwnerName)"
+                $report += "Model          : $($cs.Manufacturer) - $($cs.Model)"
+                $report += "Isletim Sistemi: $($os.Caption) (Build: $($os.BuildNumber))"
+                $report += "Kurulum Tarihi : $($os.InstallDate)"
+                $report += "Son Acilis     : $($os.LastBootUpTime)"
+                $report += ""
+                
+                $report += "[2] ANAKART & BIOS"
+                try {
+                    $board = Get-CimInstance Win32_BaseBoard
+                    $bios = Get-CimInstance Win32_BIOS
+                    $report += "Anakart Uretici: $($board.Manufacturer)"
+                    $report += "Anakart Model  : $($board.Product)"
+                    $report += "Seri No        : $($board.SerialNumber)"
+                    $report += "Surum          : $($board.Version)"
+                    $report += "BIOS Surumu    : $($bios.SMBIOSBIOSVersion) (Tarih: $($bios.ReleaseDate))"
+                    $report += "BIOS Modu      : $(if ($prob = Confirm-SecureBootUEFI -ErrorAction SilentlyContinue) { "UEFI (SecureBoot: $prob)" } else { "Legacy/Unknown" })"
+                }
+                catch { $report += "Anakart bilgisi alinamadi." }
+                $report += ""
+                
+                $report += "[3] ISLEMCI (CPU)"
+                $cpu = Get-CimInstance Win32_Processor
+                $report += "Model          : $($cpu.Name)"
+                $report += "Soket Tipi     : $($cpu.SocketDesignation)"
+                $report += "Cekirdek/Izlek : $($cpu.NumberOfCores) Cores / $($cpu.NumberOfLogicalProcessors) Threads"
+                $report += "Temel Hiz      : $($cpu.MaxClockSpeed) MHz"
+                $report += "L3 Onbellek    : $([math]::Round($cpu.L3CacheSize/1024, 2)) MB"
+                $report += "Sanallastirma  : $($cpu.VirtualizationFirmwareEnabled)"
+                $report += ""
+                
+                $report += "[4] BELLEK (RAM)"
+                $rams = Get-CimInstance Win32_PhysicalMemory
+                $totalRam = 0
+                foreach ($r in $rams) { 
+                    $gb = [math]::Round($r.Capacity / 1GB, 1)
+                    $totalRam += $gb
+                    $report += "Slot           : $gb GB - $($r.Speed) MHz - $($r.Manufacturer)"
+                    $report += "  -> Parca No  : $($r.PartNumber.Trim())"
+                    $report += "  -> Seri No   : $($r.SerialNumber.Trim())"
+                }
+                $report += "Toplam RAM     : $totalRam GB"
+                $report += ""
+                
+                $report += "[5] EKRAN KARTI (GPU)"
+                $gpus = Get-CimInstance Win32_VideoController
+                foreach ($g in $gpus) {
+                    $vram = [math]::Round($g.AdapterRAM / 1GB, 2)
+                    $report += "Model          : $($g.Name)"
+                    $report += "Surucu Tarihi  : $($g.DriverDate)"
+                    $report += "Surucu Surumu  : $($g.DriverVersion)"
+                    $report += "VRAM (Tahmini) : $vram GB"
+                    $report += "Cozunurluk     : $($g.CurrentHorizontalResolution)x$($g.CurrentVerticalResolution) @ $($g.CurrentRefreshRate)Hz"
+                    $report += "-----------------"
+                }
+                $report += ""
+                
+                $report += "[6] DEPOLAMA (DISK)"
+                $disks = Get-PhysicalDisk | Sort-Object MediaType
+                foreach ($d in $disks) {
+                    $size = [math]::Round($d.Size / 1GB, 0)
+                    $report += "Model          : $($d.FriendlyName)"
+                    $report += "Tip/Boyut      : $($d.MediaType) / $size GB"
+                    $report += "Saglik         : $($d.HealthStatus)"
+                    $report += "Seri No        : $($d.SerialNumber)"
+                    $report += "Firmware       : $($d.FirmwareVersion)"
+                    $report += "-----------------"
+                }
+                $report += ""
+                
+                $report += "[7] PIL (BATARYA) DURUMU"
+                try {
+                    $battery = Get-CimInstance -ClassName Win32_Battery -ErrorAction Stop
+                    if ($battery) {
+                        $report += "Durum          : $($battery.BatteryStatus)"
+                        $design = $battery.DesignCapacity
+                        $full = $battery.FullChargeCapacity
+                        if ($design -and $full) {
+                            $wear = [math]::Round((($design - $full) / $design) * 100, 1)
+                            $health = 100 - $wear
+                            $report += "Kapasite (Fab) : $design mWh"
+                            $report += "Kapasite (Suan): $full mWh"
+                            $report += "Pil Sagligi    : %$health"
+                            $report += "Yipranma       : %$wear"
+                        }
+                        else { $report += "Detayli kapasite verisi okunamadi." }
+                    }
+                }
+                catch { $report += "Pil bulunamadi (Masaustu sistem)." }
+                $report += ""
+                
+                $report += "[8] AG BAGDASTIRICILARI"
+                $nets = Get-CimInstance Win32_NetworkAdapter | Where-Object { $_.NetConnectionStatus -eq 2 } # Only connected
+                foreach ($n in $nets) {
+                    $report += "Isim           : $($n.Name)"
+                    $report += "MAC Adresi     : $($n.MACAddress)"
+                    $report += "Hiz            : $([math]::Round($n.Speed/1MB, 0)) Mbps"
+                    $report += "-----------------"
+                }
+                $report += ""
+                
+                $report += "[9] LISANS BILGISI"
+                $lic = Get-CimInstance SoftwareLicensingProduct | Where-Object { $_.PartialProductKey -and $_.Name -like "*Windows*" } | Select-Object -First 1
+                if ($lic) {
+                    $report += "Lisans Ismi    : $($lic.Name)"
+                    $report += "Durum          : $(if($lic.LicenseStatus -eq 1){'LISANSLI'}else{'LISANSSIZ'})"
+                    $report += "Aciklama       : $($lic.Description)"
+                    $report += "Kanal          : $(if($lic.Description -match 'OEM'){'OEM (Anakart)'}elseif($lic.Description -match 'RETAIL'){'RETAIL (Kutu)'}elseif($lic.Description -match 'VOLUME'){'VOLUME (Sirket/KMS)'}else{'DIGER'})"
+                }
+                
+                $report += "================================================================================="
+                $report += "Rapor Sonu."
+                
+                $report | Out-File -FilePath $file -Encoding UTF8
+                Write-Host "  $G ✓ DETAYLI RAPOR OLUSTURULDU:$W"
+                Write-Host "  $Y $file $W"
+                Write-Host ""
+                Read-Host "  Devam etmek icin Enter..."
+            }
+
+            "A" {
+                Show-Header
+                Write-Host "  $Y[ANALIZ] Mavi Ekran (BSOD) hatalari taraniyor (Son 1000 Olay)...$W"
+                Write-Host ""
+                try {
+                    $bsods = Get-EventLog -LogName System -Newest 1000 -InstanceId 1001, 41 -ErrorAction SilentlyContinue 
+                    # 1001=BugCheck, 41=Kernel-Power (Unexpected Shutdown)
+                    
+                    $found = 0
+                    if ($bsods) {
+                        foreach ($log in $bsods) {
+                            if ($log.EntryType -eq "Error" -or $log.InstanceId -eq 1001) {
+                                $found++
+                                Write-Host "  $R ⚠ TARIH: $($log.TimeGenerated) - HATA: $($log.Source) (Code: $($log.InstanceId))$W"
+                                if ($found -ge 5) { break }
+                            }
+                        }
+                    }
+                    
+                    if ($found -eq 0) {
+                        Write-Host "  $G ✓ TEMIZ! Son donemde kayitli mavi ekran hatasi bulunamadi.$W"
+                    }
+                    else {
+                        Write-Host ""
+                        Write-Host "  $R ⚠ DIKKAT: Sistem gecmisinde cokme kayitlari bulundu!$W"
+                        Write-Host "  $P (Bu bilgisayarda donanimsal ariza veya surucu problemi olabilir.)$W"
+                    }
+                }
+                catch { Write-Host "  $Y Olay goruntuleyicisine erisilemedi (Yonetici izni gerekebilir).$W" }
+                Write-Host ""
+                Read-Host "  Devam etmek icin Enter..."
+            }
+
+            "B" {
+                Show-Header
+                Write-Host "  $C--- BAGLI USB CIHAZLARI ---$W"
+                try {
+                    $usbs = Get-PnpDevice -Class USB -Status OK -ErrorAction SilentlyContinue | Where-Object { $_.FriendlyName -notmatch "Root Hub|Composite Device|Controller|Intel|AMD" }
+                    if ($usbs) {
+                        foreach ($u in $usbs) {
+                            Write-Host "  $G Aygit :$W $($u.FriendlyName)"
+                            Write-Host "  $Y Durum :$W $($u.Status)"
+                            Write-Host "  -------------------------"
+                        }
+                    }
+                    else { Write-Host "  $Y Harici USB aygit bulunamadi.$W" }
+                }
+                catch { Write-Host "  $R USB listesi alinamadi.$W" }
+                Write-Host ""
+                Read-Host "  Devam etmek icin Enter..."
+            }
+
+            "C" {
+                Show-Header
+                Write-Host "  $Y Kamera uygulamasi baslatiliyor...$W"
+                try {
+                    Start-Process "microsoft.windows.camera:"
+                    Write-Host "  $G ✓ Uygulama acildi. Goruntunuzu kontrol edin.$W"
+                    Write-Host "  $P (Eger acilmadiysa, magaza uygulamasi yuklu olmayabilir).$W"
+                }
+                catch { Write-Host "  $R Hata: Kamera uygulamasi bulunamadi.$W" }
+                Write-Host ""
+                Read-Host "  Devam etmek icin Enter..."
+            }
+
+            "0" { return }
+        }
+    }
+}
+
+
 # 6. ANA DONGU (MAIN LOOP)
 
 while ($true) {
@@ -880,7 +1473,8 @@ while ($true) {
     Write-Host "  $C║$W     ${G}[5]$W OYUN ARACLARI (Gaming Tools)    $Y>>$W Visual C++, DirectX vs.                $C║$W"
     Write-Host "  $C║$W     ${G}[6]$W AG ARACLARI (Network Tools)     $Y>>$W DNS Degistirici (Cloudflare/Google)    $C║$W"
     Write-Host "  $C║$W     ${G}[7]$W UYGULAMA GUNCELLEMELERI         $Y>>$W Winget ile Tumu Guncelle               $C║$W"
-    Write-Host "  $C║$W     ${G}[8]$W CIKIS                           $Y>>$W Uygulamayi kapat                       $C║$W"
+    Write-Host "  $C║$W     ${G}[8]$W PC EXPERT MODU (Alim/Satim)     $Y>>$W Donanim Kontrol & Test Araclari        $C║$W"
+    Write-Host "  $C║$W     ${R}[0]$W CIKIS                           $Y>>$W Uygulamayi kapat                       $C║$W"
     Write-Host "  $C║$W                                                                                   $C║$W"
     Write-Host "  $C╚═══════════════════════════════════════════════════════════════════════════════════╝$W"
     Write-Host ""
@@ -898,7 +1492,8 @@ while ($true) {
         "5" { Start-GamingTools }
         "6" { Start-NetworkTools }
         "7" { Start-AppUpdates }
-        "8" { exit }
+        "8" { Start-PCExpertMode }
+        "0" { exit }
         default { 
             Write-Host "  $R Gecersiz secim!$W"
             Start-Sleep -Seconds 1
