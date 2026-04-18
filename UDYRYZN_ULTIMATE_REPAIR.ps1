@@ -18,8 +18,8 @@ $UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 # 3. YAPILANDIRMA
 $CURRENT_VER = "2.8" 
 # Not: Versiyon kontrol URL'lerini orijinal dosyalardan aldım, gerekirse güncelleyin.
-$URL_VERSION = "https://raw.githubusercontent.com/udyrYzn/UDYRYZN-Ultimate-repair/main/version.txt"
-$URL_SCRIPT = "https://raw.githubusercontent.com/udyrYzn/UDYRYZN-Ultimate-repair/main/UDYRYZN_ULTIMATE_REPAIR.ps1"
+$URL_VERSION = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/version.txt"
+$URL_SCRIPT = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/UDYRYZN_ULTIMATE_REPAIR.ps1"
 
 # Renk Kodları (Orijinal Dosyadan)
 $ESC = [char]27
@@ -139,8 +139,15 @@ try {
             }
         }
     }
+    else {
+        Write-Host "  $PAD_SUB $R⚠ Guncelleme sunucusuna (GitHub) ulasilamadi! (Gizli depo veya baglanti hatasi)$W"
+        Start-Sleep -Seconds 2
+    }
 }
-catch { }
+catch {
+    Write-Host "  $PAD_SUB $R⚠ Guncelleme kontrolunde hata olustu (HTTP 404 / Baglanti).$W"
+    Start-Sleep -Seconds 2
+}
 
 # 5. YARDIMCI FONKSIYONLAR
 
