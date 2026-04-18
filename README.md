@@ -9,8 +9,11 @@
 ## 🌟 Yeni Nesil Özellikler (v2.8)
 
 ⚡ **Instant KeyRead (Anında Tepki):** Menülerde seçim yaparken "Enter" tuşuna basmanıza gerek kalmaz. Seçeneğe dokunduğunuz milisaniye içerisinde sistem algılar ve aksiyon alır.
+
 ⚡ **İnteraktif Winget Updater:** Uygulamaları körü körüne güncellemez. Karşınıza **[A]ll (Tümü)**, **[M]anual (Seçmeli)** veya **[Q]uit (İptal)** seçeneklerinden oluşan havalı bir arayüz çıkarır.
+
 ⚡ **Akıllı Korumalar:** Sistemdeki VPN veya Sanal Ağ kartlarının (VMware gibi) DNS adreslerini bozmaz, Mavi Ekran (BSOD) geçmişini temizlikten muaf tutar.
+
 ⚡ **Bölge Bağımsız Güncelleme:** Otomatik sistem güncelleyici, dünyadaki tüm bölgesel ondalık / tarih farklılıklarını aşarak (`[version]` parsing) stabil çalışacak şekilde yeniden yapılandırıldı.
 
 ---
