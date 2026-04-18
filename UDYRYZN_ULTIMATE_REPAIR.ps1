@@ -1,7 +1,7 @@
 # UDYRYZN ULTIMATE REPAIR ENGINE v1.0
 # Unified System Maintenance Tool
 #
-# Credits: YzN-UDYR
+# Credits: udyrYzn
 
 # 1. YONETICI KONTROLU (Admin Privileges)
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -16,10 +16,10 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 $UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 
 # 3. YAPILANDIRMA
-$CURRENT_VER = "2.5" 
+$CURRENT_VER = "2.8" 
 # Not: Versiyon kontrol URL'lerini orijinal dosyalardan aldım, gerekirse güncelleyin.
-$URL_VERSION = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/version.txt"
-$URL_SCRIPT = "https://raw.githubusercontent.com/YzN-UDYR/UDYRYZN-Ultimate-repair/main/UDYRYZN_ULTIMATE_REPAIR.ps1"
+$URL_VERSION = "https://raw.githubusercontent.com/udyrYzn/UDYRYZN-Ultimate-repair/main/version.txt"
+$URL_SCRIPT = "https://raw.githubusercontent.com/udyrYzn/UDYRYZN-Ultimate-repair/main/UDYRYZN_ULTIMATE_REPAIR.ps1"
 
 # Renk Kodları (Orijinal Dosyadan)
 $ESC = [char]27
@@ -74,7 +74,7 @@ try {
             Write-Host ""
             Write-Host -NoNewline "  $C►$W Seciminiz: "
             
-            $choice = Read-Host
+            $choice = [System.Console]::ReadKey($true).KeyChar.ToString(); Write-Host $choice
             
             if ($choice -eq "E" -or $choice -eq "e") {
                 Write-Host "  $C⚙️  GUNCELLEME BASLATILIYOR...$W"
@@ -161,47 +161,119 @@ function Show-Header {
 }
 
 function Start-FastClean {
-    # .bat dosyasındaki "Fast Engine" mantığı
     Write-Host "  $Y► HIZLI TEMIZLIK MODU BASLATILIYOR...$W"
     Write-Host "  $B-------------------------------------$W"
     
-    # 1. Ağ Optimizasyonu
-    Write-Host "  $P[01]$W $C AG PROTOKOLLERI$W"
-    Write-Host -NoNewline "  $PAD_SUB DNS ve IP yiginlari sifirlaniyor..."
+    # [01] Ağ Optimizasyonu ve Winsock Sıfırlama
+    Write-Host "  $P[01]$W $C AG PROTOKOLLERI & WINSOCK$W"
+    Write-Host -NoNewline "  $PAD_SUB Ag baglantilari ve Winsock sifirlaniyor..."
     try {
         ipconfig /flushdns | Out-Null
         ipconfig /release | Out-Null
-        ipconfig /renew   | Out-Null
+        ipconfig /renew | Out-Null
         netsh winsock reset | Out-Null
+        netsh winsock reset catalog | Out-Null
         netsh int ip reset | Out-Null
+        netsh int ipv4 reset | Out-Null
+        netsh int ipv6 reset | Out-Null
         Write-Host " ${G}[DONE]$W"
     }
     catch { Write-Host " ${R}[FAIL]$W" }
 
-    # 2. Temp Temizliği (PowerShell ile daha güvenli)
-    Write-Host "  $P[02]$W $C GEÇİCİ DOSYA TEMİZLİĞİ$W"
-    Write-Host -NoNewline "  $PAD_SUB Temp ve Prefetch temizleniyor..."
-    
+    # [02] Temel Windows Geçici Dosyaları
+    Write-Host "  $P[02]$W $C WINDOWS GECICI DOSYALAR VE LOGLAR$W"
+    Write-Host -NoNewline "  $PAD_SUB Temp, Prefetch ve Log kalintilari siliniyor..."
     $TempFolders = @(
         "$env:TEMP",
         "$env:SystemRoot\Temp",
-        "$env:SystemRoot\Prefetch"
+        "$env:SystemRoot\Prefetch",
+        "$env:SystemRoot\SoftwareDistribution\Download",
+        "$env:ProgramData\Microsoft\Windows\WER\ReportArchive",
+        "$env:ProgramData\Microsoft\Windows\WER\ReportQueue"
     )
-
     foreach ($Folder in $TempFolders) {
         if (Test-Path $Folder) {
-            Get-ChildItem -Path $Folder -Recurse -Force -ErrorAction SilentlyContinue | 
-            Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+            Get-ChildItem -Path $Folder -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
         }
     }
-    
-    # Geri Dönüşüm Kutusu
-    Clear-RecycleBin -Force -ErrorAction SilentlyContinue
-
+    # .log ve .dmp (Hata dökümleri) silme
+    try {
+        Get-ChildItem -Path "$env:SystemRoot\*.log", "$env:SystemRoot\*.dmp" -Force -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+    }
+    catch {}
     Write-Host " ${G}[DONE]$W"
 
+    # [03] Tarayıcı Önbelleği (Çerez/Şifre hariç)
+    Write-Host "  $P[03]$W $C TARAYICI ONBELLEKLERI (CACHE)$W"
+    Write-Host -NoNewline "  $PAD_SUB Chrome, Edge, Firefox, Brave cache siliniyor..."
+    $BrowserCaches = @(
+        "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Cache",
+        "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Code Cache",
+        "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cache",
+        "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Code Cache",
+        "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Cache",
+        "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Code Cache"
+    )
+    $FirefoxProfiles = "$env:LOCALAPPDATA\Mozilla\Firefox\Profiles"
+    if (Test-Path $FirefoxProfiles) {
+        Get-ChildItem -Path $FirefoxProfiles -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+            $BrowserCaches += "$($_.FullName)\cache2"
+        }
+    }
+    foreach ($CachePath in $BrowserCaches) {
+        if (Test-Path $CachePath) {
+            Get-ChildItem -Path $CachePath -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+        }
+    }
+    Write-Host " ${G}[DONE]$W"
+
+    # [04] Görsel ve Performans Önbellekleri
+    Write-Host "  $P[04]$W $C GORSEL, SHADER VE PANO ONBELLEKLERI$W"
+    Write-Host -NoNewline "  $PAD_SUB Icon, Thumbnail, Shader, Pano sifirlaniyor..."
+    try {
+        # Pano (Clipboard) Temizliği
+        cmd.exe /c "echo off | clip"
+        
+        # Explorer Cache files (Icon and Thumb)
+        Get-ChildItem "$env:LOCALAPPDATA\Microsoft\Windows\Explorer\*.db" -Force -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+        Get-ChildItem "$env:LOCALAPPDATA\IconCache.db" -Force -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+
+        # DirectX / NVIDIA / AMD Shader Cache (Oyun takılmalarını azaltmak için)
+        $ShaderCaches = @(
+            "$env:LOCALAPPDATA\D3DSCache",
+            "$env:LOCALAPPDATA\AMD\DxCache",
+            "$env:LOCALAPPDATA\NVIDIA\GLCache",
+            "$env:LOCALAPPDATA\NVIDIA\ComputeCache"
+        )
+        foreach ($Shader in $ShaderCaches) {
+            if (Test-Path $Shader) {
+                Get-ChildItem -Path $Shader -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+            }
+        }
+        Write-Host " ${G}[DONE]$W"
+    }
+    catch { Write-Host " ${R}[FAIL]$W" }
+
+    # [05] Sistem Çöp Kutusu
+    Write-Host "  $P[05]$W $C SISTEM ÇÖP KUTUSU$W"
+    Write-Host -NoNewline "  $PAD_SUB Geri donusum kutusu bosaltiliyor..."
+    try {
+        Clear-RecycleBin -Force -ErrorAction SilentlyContinue
+        Write-Host " ${G}[DONE]$W"
+    }
+    catch { Write-Host " ${R}[FAIL]$W" }
+
+    # [06] Disk ve TRIM Optimizasyonu
+    Write-Host "  $P[06]$W $C DISK OPTIMIZASYONU (TRIM/DEFRAG)$W"
+    Write-Host -NoNewline "  $PAD_SUB Diskte silinen verilerin bosluklari temizleniyor..."
+    try {
+        Optimize-Volume -DriveLetter C -ReTrim -Defrag -ErrorAction SilentlyContinue | Out-Null
+        Write-Host " ${G}[DONE]$W"
+    }
+    catch { Write-Host " ${Y}[PASS]$W (Uygulanamadi)" }
+
     Write-Host ""
-    Write-Host "  $G✓ HIZLI TEMIZLIK TAMAMLANDI!$W"
+    Write-Host "  $G✓ HIZLI VE OPTIMIZE TEMIZLIK TAMAMLANDI!$W"
     Write-Host ""
     Read-Host "  Ana menuye donmek icin Enter'a basin..."
 }
@@ -236,18 +308,28 @@ function Start-DeepRepair {
     Show-Progress 1
     Write-Host "  $P$PAD_TXT[02]$W $C SISTEM DOSYASI ONARIMI (SFC)$W"
     Write-Host "  $PAD_SUB Sistem taramasi baslatiliyor, lutfen bekleyin..."
-    Start-Process -FilePath "sfc" -ArgumentList "/scannow" -Wait -NoNewWindow
-    Write-Host "  $PAD_SUB SFC Taramasi Tamamlandi ${G}[DONE]$W"
+    $sfcProc = Start-Process -FilePath "sfc" -ArgumentList "/scannow" -Wait -NoNewWindow -PassThru
+    if ($sfcProc.ExitCode -eq 0) {
+        Write-Host "  $PAD_SUB Sistem dosyalari saglam ${G}[DONE]$W"
+    }
+    elseif ($sfcProc.ExitCode -eq 3010) {
+        Write-Host "  $PAD_SUB Sistem dosyalari ONARILDI ${Y}[RESTART REQUIRED]$W"
+    }
+    else {
+        Write-Host "  $PAD_SUB SFC Taramasi Tamamlandi (Kod: $($sfcProc.ExitCode)) ${Y}[DONE]$W"
+    }
     $script:SuccessCount++
     Write-Host ""
 
     # [03] DISM
     Show-Progress 2
-    Write-Host "  $P$PAD_TXT[03]$W $C DISM DERIN ONARIM$W"
-    Write-Host "  $PAD_SUB RestoreHealth calistiriliyor..."
+    Write-Host "  $P$PAD_TXT[03]$W $C DISM DERIN ONARIM VE TEMIZLIK$W"
+    Write-Host "  $PAD_SUB RestoreHealth calistiriliyor (Hasarli dosyalar onariliyor)..."
     dism /online /cleanup-image /restorehealth | Out-Null
-    Write-Host "  $PAD_SUB ComponentCleanup calistiriliyor..."
-    dism /online /cleanup-image /startcomponentcleanup | Out-Null
+    Write-Host "  $PAD_SUB ResetBase calistiriliyor (Guncelleme yedekleri siliniyor - Uzun surebilir)..."
+    dism /online /cleanup-image /startcomponentcleanup /resetbase | Out-Null
+    Write-Host "  $PAD_SUB SPSuperseded calistiriliyor (Eski servis paketleri temizleniyor)..."
+    dism /online /cleanup-image /spsuperseded | Out-Null
     Write-Host "  $PAD_SUB DISM Islemleri Tamamlandi ${G}[DONE]$W"
     $script:SuccessCount++
     Write-Host ""
@@ -256,9 +338,11 @@ function Start-DeepRepair {
     Show-Progress 3
     Write-Host "  $P$PAD_TXT[04]$W $C LOG TEMIZLIGI$W"
     Get-WinEvent -ListLog * -ErrorAction SilentlyContinue | ForEach-Object {
-        try { [System.Diagnostics.Eventing.Reader.EventLogSession]::GlobalSession.ClearLog($_.LogName) } catch {}
+        if ($_.LogName -ne "System" -and $_.LogName -ne "Application") {
+            try { [System.Diagnostics.Eventing.Reader.EventLogSession]::GlobalSession.ClearLog($_.LogName) } catch {}
+        }
     }
-    Write-Host "  $PAD_SUB Sistem Loglari Temizlendi ${G}[DONE]$W"
+    Write-Host "  $PAD_SUB Sistem Loglari Temizlendi (Mavi Ekran & Kritik gecmis korundu) ${G}[DONE]$W"
     $script:SuccessCount++
     Write-Host ""
 
@@ -283,112 +367,7 @@ function Start-DeepRepair {
     catch { }
     Write-Host ""
 
-    # [07] WINGET
-    Show-Progress 6
-    Write-Host "  $P$PAD_TXT[07]$W $C UYGULAMA GUNCELLEMELERI$W"
-    
-    if (Get-Command winget -ErrorAction SilentlyContinue) {
-        Write-Host "  $PAD_SUB Guncellemeler kontrol ediliyor (Lutfen bekleyin)..."
-        
-        # Guncelleme listesini al
-        $rawOutput = winget upgrade --include-unknown | Out-String
-        $lines = $rawOutput -split "`r`n" | Where-Object { $_.Trim() -ne "" }
-        
-        # Baslik satirini bul (Separator ---)
-        $sepIndex = -1
-        for ($i = 0; $i -lt $lines.Count; $i++) {
-            if ($lines[$i] -match "^-+$") {
-                $sepIndex = $i
-                break
-            }
-        }
-        
-        $packages = @()
-        if ($sepIndex -ge 0) {
-            # Tabloyu parse et
-            for ($i = $sepIndex + 1; $i -lt $lines.Count; $i++) {
-                $line = $lines[$i]
-                if ($line -match "upgrades available") { continue } # Footer
-                
-                # SÃ¼tunlar: Name, split by 2+ spaces
-                $parts = $line -split "\s{2,}"
-                if ($parts.Count -ge 2) {
-                    $packages += @{
-                        Name    = $parts[0]
-                        Id      = $parts[1]
-                        Version = if ($parts.Count -gt 2) { $parts[2] } else { "?" }
-                    }
-                }
-            }
-        }
-        
-        if ($packages.Count -eq 0) {
-            Write-Host "  $PAD_SUB Sisteminiz guncel! (Guncellenecek paket bulunamnadi) ${G}[DONE]$W"
-        }
-        else {
-            Write-Host "  $PAD_SUB $($packages.Count) adet guncelleme bulundu."
-            Write-Host ""
-            
-            foreach ($pkg in $packages) {
-                $pName = $pkg.Name
-                $pkgId = $pkg.Id
-                $pVer = $pkg.Version
-                
-                # Boyut bilgisi (Simulasyon/Placeholder - Winget hizli vermedigi icin)
-                # Gercek boyutu almak cok yavaslatir (winget show <id>).
-                # Kullanici "kac mb oldugunu yaz" dedi ama performans icin hizli geciyoruz.
-                # Eger "Available" sutununda varsa (bazen olur) oradan alabiliriz ama standart degil.
-                # Biz "Hesaplaniyor..." deyip baslatacagiz.
-                
-                Write-Host "  $Y ► $pName $W($C$pVer$W) Guncelleniyor... [Boyut: Hesaplaniyor...]"
-                
-                # Job baslat
-                $job = Start-Job -ScriptBlock {
-                    param($id)
-                    winget upgrade --id $id --silent --force --accept-package-agreements --accept-source-agreements
-                } -ArgumentList $pkgId
-                
-                # Animasyon Dongusu (Marquee Progress Bar)
-                $barWidth = 30
-                $pos = 0
-                $direction = 1
-                
-                while ($job.State -eq 'Running') {
-                    # Bar Olustur: [      <===>       ]
-                    $spaceBefore = " " * $pos
-                    $block = "<===>"
-                    $spaceAfter = " " * ($barWidth - $pos)
-                    
-                    if ($spaceAfter.Length -lt 0) { $spaceAfter = "" } # Guvenlik
-                    
-                    $barStr = "  $PAD_SUB [$spaceBefore$block$spaceAfter] "
-                    
-                    Write-Host -NoNewline "$barStr"
-                    Start-Sleep -Milliseconds 100
-                    
-                    # Backspace ile sil (Bar uzunlugu kadar)
-                    $backspaces = "`b" * ($barStr.Length)
-                    Write-Host -NoNewline $backspaces
-                    
-                    # Pozisyon Guncelle
-                    $pos += $direction
-                    if ($pos -ge $barWidth) { $direction = -1; $pos = $barWidth }
-                    if ($pos -le 0) { $direction = 1; $pos = 0 }
-                }
-                
-                # Sonucu Al
-                Receive-Job $job | Out-Null
-                Remove-Job $job
-                
-                # Satiri Temizle
-                Write-Host -NoNewline (" " * 60 + "`r")
-                
-                Write-Host "  $G ✓ $pName Guncellendi!$W"
-            }
-            Write-Host ""
-            Write-Host "  $PAD_SUB Tum guncellemeler tamamlandi ${G}[DONE]$W"
-        }
-    }
+
     # [07] WINGET
     Show-Progress 6
     if (Get-Command winget -ErrorAction SilentlyContinue) {
@@ -440,7 +419,7 @@ function Start-ExtraTools {
         Write-Host ""
         Write-Host -NoNewline "  $C►$W Seciminiz: "
         
-        $subMenu = Read-Host
+        $subMenu = [System.Console]::ReadKey($true).KeyChar.ToString(); Write-Host $subMenu
         
         switch ($subMenu) {
             "1" { 
@@ -491,7 +470,7 @@ function Start-DailyFixes {
         Write-Host ""
         Write-Host -NoNewline "  $C►$W Seciminiz: "
         
-        $dlMenu = Read-Host
+        $dlMenu = [System.Console]::ReadKey($true).KeyChar.ToString(); Write-Host $dlMenu
         
         switch ($dlMenu) {
             "1" {
@@ -584,7 +563,7 @@ function Start-GamingTools {
 
         Write-Host -NoNewline "  $C►$W Seciminiz: "
         
-        $gmMenu = Read-Host
+        $gmMenu = [System.Console]::ReadKey($true).KeyChar.ToString(); Write-Host $gmMenu
         
         switch ($gmMenu) {
             "1" {
@@ -655,99 +634,110 @@ function Start-AppUpdates {
         Write-Host ""
     }
 
-    if (Get-Command winget -ErrorAction SilentlyContinue) {
-        Write-Host "  $PAD_SUB Guncellemeler kontrol ediliyor (Lutfen bekleyin)..."
-        
-        # Guncelleme listesini al
-        $rawOutput = winget upgrade --include-unknown | Out-String
-        $lines = $rawOutput -split "`r`n" | Where-Object { $_.Trim() -ne "" }
-        
-        # Baslik satirini bul (Separator ---)
-        $sepIndex = -1
-        for ($i = 0; $i -lt $lines.Count; $i++) {
-            if ($lines[$i] -match "^-+$") {
-                $sepIndex = $i
-                break
-            }
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+        Write-Host "  $R 'winget' bulunamadi. Geciliyor.$W"
+        Write-Host ""
+        if (-not $IsSubOperation) { Read-Host "  Ana menuye donmek icin Enter'a basin..." }
+        return
+    }
+
+    Write-Host "  $PAD_SUB Guncellemeler kontrol ediliyor (Lutfen bekleyin)..."
+    
+    $rawOutput = winget upgrade --include-unknown | Out-String
+    $lines = $rawOutput -split "`r`n" | Where-Object { $_.Trim() -ne "" }
+    
+    $sepIndex = -1
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -match "^-+$") {
+            $sepIndex = $i
+            break
         }
-        
-        $packages = @()
-        if ($sepIndex -ge 0) {
-            # Tabloyu parse et
-            for ($i = $sepIndex + 1; $i -lt $lines.Count; $i++) {
-                $line = $lines[$i]
-                if ($line -match "upgrades available") { continue } # Footer
-                
-                # SÃ¼tunlar: Name, split by 2+ spaces
-                $parts = $line -split "\s{2,}"
-                if ($parts.Count -ge 2) {
-                    $packages += @{
-                        Name    = $parts[0]
-                        Id      = $parts[1]
-                        Version = if ($parts.Count -gt 2) { $parts[2] } else { "?" }
-                    }
-                }
-            }
-        }
-        
-        if ($packages.Count -eq 0) {
-            Write-Host "  $PAD_SUB Sisteminiz guncel! (Guncellenecek paket bulunamnadi) ${G}[DONE]$W"
-        }
-        else {
-            Write-Host "  $PAD_SUB $($packages.Count) adet guncelleme bulundu."
-            Write-Host ""
+    }
+    
+    $packages = @()
+    if ($sepIndex -ge 0) {
+        for ($i = $sepIndex + 1; $i -lt $lines.Count; $i++) {
+            $line = $lines[$i]
+            if ($line -match "upgrades available" -or $line -match "guncelleme var") { continue }
             
-            foreach ($pkg in $packages) {
-                $pName = $pkg.Name
-                $pkgId = $pkg.Id
-                $pVer = $pkg.Version
-                
-                # Uzun isimleri kisalt (UI tasmamasi icin)
-                if ($pName.Length -gt 35) {
-                    $pNameDisplay = $pName.Substring(0, 32) + "..."
+            $parts = $line -split "\s{2,}"
+            if ($parts.Count -ge 2) {
+                $packages += @{
+                    Name    = $parts[0]
+                    Id      = $parts[1]
+                    Version = if ($parts.Count -gt 2) { $parts[2] } else { "?" }
                 }
-                else {
-                    $pNameDisplay = $pName
-                }
-                
-                Write-Host "  $Y ► $pNameDisplay $W($C$pVer$W) Guncelleniyor... " -NoNewline
-                
-                # Job baslat
-                $job = Start-Job -ScriptBlock {
-                    param($id)
-                    winget upgrade --id $id --silent --force --accept-package-agreements --accept-source-agreements
-                } -ArgumentList $pkgId
-                
-                # Animasyon Dongusu (Spinner)
-                $spinner = @('|', '/', '-', '\')
-                $spinIdx = 0
-                
-                while ($job.State -eq 'Running') {
-                    $char = $spinner[$spinIdx % 4]
-                    Write-Host -NoNewline "$char"
-                    Start-Sleep -Milliseconds 100
-                    Write-Host -NoNewline "`b" # Backspace ile sil
-                    $spinIdx++
-                }
-                
-                # Sonucu Al
-                Receive-Job $job | Out-Null
-                Remove-Job $job
-                
-                # Satiri Temizle
-                Write-Host -NoNewline (" " * 60 + "`r")
-                
-                Write-Host "  $G ✓ $pName Guncellendi!$W"
             }
-            Write-Host ""
-            Write-Host "  $PAD_SUB Tum guncellemeler tamamlandi ${G}[DONE]$W"
         }
+    }
+    
+    if ($packages.Count -eq 0) {
+        Write-Host "  $PAD_SUB Sisteminiz guncel! (Guncellenecek paket bulunamnadi) ${G}[DONE]$W"
     }
     else {
-        Write-Host "  $R 'winget' bulunamadi. Geciliyor.$W"
+        Write-Host "  $PAD_SUB $($packages.Count) adet guncelleme bulundu:"
+        Write-Host ""
+        
+        $idx = 1
+        foreach ($pkg in $packages) {
+            Write-Host "  $C[$idx]$W $($pkg.Name) $Y($($pkg.Version))$W"
+            $idx++
+        }
+        Write-Host ""
+        
+        $action = "A" # Varsayılan: Tümünü güncelle
+        if (-not $IsSubOperation) {
+            Write-Host "  $C Secenekler:$W"
+            Write-Host "  $G [A]$W Tumunu Guncelle (Otomatik Sessiz)"
+            Write-Host "  $Y [M]$W Manuel Secim (Tek Tek Sor)"
+            Write-Host "  $R [Q]$W Iptal Et ve Cik"
+            Write-Host ""
+            $action = Read-Host "  $C►$W Seciminiz (A/M/Q)"
+        }
+        
+        if ($action -match "Q" -or $action -match "q") {
+            Write-Host "  $Y Guncelleme islemi kullanici tarafindan iptal edildi.$W"
+            Write-Host ""
+            if (-not $IsSubOperation) { Read-Host "  Ana menuye donmek icin Enter'a basin..." }
+            return
+        }
+        
+        Write-Host ""
+        foreach ($pkg in $packages) {
+            $pName = $pkg.Name
+            $pkgId = $pkg.Id
+            
+            if ($action -match "M" -or $action -match "m") {
+                $ans = Read-Host "  $Y? $pName guncellensin mi? (E/H)$W"
+                if ($ans -notmatch "E|e") {
+                    Write-Host "  $P ► $pName ATLANDI.$W"
+                    Write-Host ""
+                    continue
+                }
+            }
+            
+            Write-Host "  $Y ► $pName Guncelleniyor... $W"
+            
+            # Winget on planda calisir (-Wait). Job kullanmadigimiz icin kilitlenmez ve kullanıcı Sözleşme onaylarını gorebilir.
+            try {
+                $proc = Start-Process -FilePath "winget" -ArgumentList "upgrade --id `"$pkgId`" --silent --accept-package-agreements --accept-source-agreements --force" -Wait -NoNewWindow -PassThru
+                if ($proc.ExitCode -eq 0) {
+                    Write-Host "  $G ✓ $pName basariyla guncellendi!$W"
+                }
+                else {
+                    Write-Host "  $R ✗ $pName guncellenirken hata olustu (Kod: $($proc.ExitCode))$W"
+                    Write-Host "  $P (Yonetici izni onaylanmamis veya acik olan program guncellenememis olabilir.)$W"
+                }
+            }
+            catch {
+                Write-Host "  $R ✗ Ulasilamayan bir sistem hatasi olustu.$W"
+            }
+            Write-Host ""
+        }
+        Write-Host "  $PAD_SUB Tum guncelleme islemleri tamamlandi ${G}[DONE]$W"
     }
-    Write-Host ""
 
+    Write-Host ""
     if (-not $IsSubOperation) {
         Read-Host "  Ana menuye donmek icin Enter'a basin..."
     }
@@ -789,14 +779,14 @@ function Start-NetworkTools {
 
         Write-Host -NoNewline "  $C►$W Seciminiz: "
         
-        $nwMenu = Read-Host
+        $nwMenu = [System.Console]::ReadKey($true).KeyChar.ToString(); Write-Host $nwMenu
         
         switch ($nwMenu) {
             "1" {
                 Write-Host "  $Y Cloudflare DNS ayarlaniyor...$W"
                 try {
-                    Get-NetAdapter | Where-Object { $_.Status -eq "Up" } | Set-DnsClientServerAddress -ServerAddresses ("1.1.1.1", "1.0.0.1") -ErrorAction Stop
-                    $ResultMsg = "$G✓ Cloudflare DNS (1.1.1.1) basariyla uygulandi!$W"
+                    Get-NetAdapter | Where-Object { $_.Status -eq "Up" -and $_.Virtual -eq $false } | Set-DnsClientServerAddress -ServerAddresses ("1.1.1.1", "1.0.0.1") -ErrorAction Stop
+                    $ResultMsg = "$G✓ Cloudflare DNS (1.1.1.1) basariyla fiziksel aglara uygulandi!$W"
                 }
                 catch {
                     $ResultMsg = "$R HATA: DNS degistirilemedi. Yonetici oldugunuzdan emin olun.$W"
@@ -805,8 +795,8 @@ function Start-NetworkTools {
             "2" {
                 Write-Host "  $Y Google DNS ayarlaniyor...$W"
                 try {
-                    Get-NetAdapter | Where-Object { $_.Status -eq "Up" } | Set-DnsClientServerAddress -ServerAddresses ("8.8.8.8", "8.8.4.4") -ErrorAction Stop
-                    $ResultMsg = "$G✓ Google DNS (8.8.8.8) basariyla uygulandi!$W"
+                    Get-NetAdapter | Where-Object { $_.Status -eq "Up" -and $_.Virtual -eq $false } | Set-DnsClientServerAddress -ServerAddresses ("8.8.8.8", "8.8.4.4") -ErrorAction Stop
+                    $ResultMsg = "$G✓ Google DNS (8.8.8.8) fiziksel aglara uygulandi!$W"
                 }
                 catch {
                     $ResultMsg = "$R HATA: DNS degistirilemedi. Yonetici oldugunuzdan emin olun.$W"
@@ -815,8 +805,8 @@ function Start-NetworkTools {
             "3" {
                 Write-Host "  $Y Otomatik DNS (DHCP) ayarlarina donuluyor...$W"
                 try {
-                    Get-NetAdapter | Where-Object { $_.Status -eq "Up" } | Set-DnsClientServerAddress -ResetServerAddresses -ErrorAction Stop
-                    $ResultMsg = "$G✓ DNS ayarlari sifirlandi (Otomatik/DHCP)!$W"
+                    Get-NetAdapter | Where-Object { $_.Status -eq "Up" -and $_.Virtual -eq $false } | Set-DnsClientServerAddress -ResetServerAddresses -ErrorAction Stop
+                    $ResultMsg = "$G✓ DNS ayarlari fiziksel aglar icin sifirlandi!$W"
                 }
                 catch {
                     $ResultMsg = "$R HATA: DNS sifirlanamadi. Yonetici oldugunuzdan emin olun.$W"
@@ -890,7 +880,7 @@ function Start-PCExpertMode {
         Write-Host ""
         Write-Host -NoNewline "  $C►$W Seciminiz: "
         
-        $exMenu = Read-Host
+        $exMenu = [System.Console]::ReadKey($true).KeyChar.ToString(); Write-Host $exMenu
         
         switch ($exMenu) {
             "1" {
@@ -1123,7 +1113,7 @@ function Start-PCExpertMode {
                     
                     # Start Jobs
                     for ($i = 0; $i -lt $cores; $i++) {
-                        $jobs += Start-Job -ScriptBlock { while ($true) { $r = [math]::Sqrt(123456789.123) } }
+                        $jobs += Start-Job -ScriptBlock { while ($true) { $null = [math]::Sqrt(123456789.123) } }
                     }
                     
                     $startTime = Get-Date
@@ -1531,7 +1521,7 @@ while ($true) {
     Write-Host ""
     Write-Host -NoNewline "  $C►$W Seciminiz: "
     
-    $InputKey = Read-Host
+    $InputKey = [System.Console]::ReadKey($true).KeyChar.ToString(); Write-Host $InputKey
     
     switch ($InputKey) {
         "1" { Start-FastClean }
