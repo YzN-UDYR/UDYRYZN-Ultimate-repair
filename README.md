@@ -1,67 +1,64 @@
-# 🚀 UDYRYZN ULTIMATE REPAIR ENGINE v2.5 (MAS Edition)
+# 🚀 UDYRYZN ULTIMATE REPAIR ENGINE v2.8 (MAS Edition)
 
 ![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue?logo=powershell&style=for-the-badge) ![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D6?logo=windows&style=for-the-badge) ![Maintenance](https://img.shields.io/badge/Maintenance-Active-success?style=for-the-badge) ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-**UDYRYZN Ultimate Repair**, Windows sistemlerinizi onarmak, hizlandirmak ve yonetmek icin gelistirilmis kapsamli bir PowerShell aracidir. Bu surum (**v2.5**), unlu **Microsoft Activation Scripts (MAS)** entegrasyonu ile birlikte gelir.
+**UDYRYZN Ultimate Repair**, Windows sistemlerinizi onarmak, hızlandırmak ve yönetmek için geliştirilmiş kapsamlı ve otonom bir PowerShell aracıdır. Bu son sürüm (**v2.8**), Microsoft Activation Scripts (MAS) entegrasyonu, İnteraktif Güncelleyici ve Instant KeyRead özellikleri ile donanmıştır.
 
 ---
 
-## 🌟 Özellikler (Features)
+## 🌟 Yeni Nesil Özellikler (v2.8)
 
-Bu araç, sistem bakimindan oyun performansina, ag ayarlarindan donanim analizine kadar her seyi tek bir menude toplar.
+⚡ **Instant KeyRead (Anında Tepki):** Menülerde seçim yaparken "Enter" tuşuna basmanıza gerek kalmaz. Seçeneğe dokunduğunuz milisaniye içerisinde sistem algılar ve aksiyon alır.
+⚡ **İnteraktif Winget Updater:** Uygulamaları körü körüne güncellemez. Karşınıza **[A]ll (Tümü)**, **[M]anual (Seçmeli)** veya **[Q]uit (İptal)** seçeneklerinden oluşan havalı bir arayüz çıkarır.
+⚡ **Akıllı Korumalar:** Sistemdeki VPN veya Sanal Ağ kartlarının (VMware gibi) DNS adreslerini bozmaz, Mavi Ekran (BSOD) geçmişini temizlikten muaf tutar.
+⚡ **Bölge Bağımsız Güncelleme:** Otomatik sistem güncelleyici, dünyadaki tüm bölgesel ondalık / tarih farklılıklarını aşarak (`[version]` parsing) stabil çalışacak şekilde yeniden yapılandırıldı.
 
-### � [1] Fast Clean (Hızlı Temizlik)
-Sistemi yormadan hizli bir temizlik ve ag yenileme islemi yapar.
-*   ✅ **DNS & IP Reset:** Ag baglantisini yeniler (Flush DNS, Release/Renew IP).
-*   ✅ **Temp & Prefetch Temizliği:** Gecici dosyalari silerek yer acar.
-*   ✅ **Geri Dönüşüm Kutusu:** Cop kutusunu bosaltir.
+---
+
+## 🛠️ Modüller (Modules)
+
+### 🧹 [1] Fast Clean (Hızlı Temizlik)
+Sistemi yormadan derinlemesine bir hızlandırma yapar.
+*   ✅ **DNS & IP Reset:** Ağ bağlantısını yeniler (Flush DNS, Release/Renew IP).
+*   ✅ **Gelişmiş Önbellek:** Temp, Prefetch, Tarayıcı Çerezleri ve Shader (Ekran Kartı) kalıntılarını siler.
+*   ✅ **Disk Optimizasyonu:** SSD'ler için `ReTrim` komutlarını tetikleyerek diskin donanımsal olarak nefes almasını sağlar.
 
 ### 🔧 [2] Deep Repair (Derin Onarım)
-Sistem dosyalarini ve bilesenlerini derinlemesine onarir.
-*   ✅ **SFC & DISM Onarımı:** Bozuk Windows dosyalarini otomatik tespit eder ve duzeltir.
-*   ✅ **Windows Update & Ikon Önbelleği:** Bozuk update dosyalarini ve ikonlari temizler.
-*   ✅ **Winget Güncellemeleri:** Sistemdeki tum uygulamalari (Winget) otomatik gunceller.
-*   ✅ **CHKDSK Planlama:** Disk hatalarini onarmak icin bir sonraki baslangica tarama planlar.
-*   ✅ **Olay Günlükleri (Event Logs):** Gereksiz sistem loglarini temizler.
+Sistem dosyalarını ve bileşenlerini derinlemesine onarır.
+*   ✅ **SFC & DISM Onarımı:** Bozuk Windows dosyalarını onarır. Sonuçları doğrudan (Örn: ONARILDI [YENİDEN BAŞLAT]) akıllı dille bildirir.
+*   ✅ **Tam Güvenli Log Temizliği:** Olay günlüklerini (Event Logs) temizlerken System/App loglarını koruyarak geçmiş hata verilerinizi silinmekten kurtarır.
+*   ✅ **CHKDSK Planlama:** Disk hatalarını onarmak için başlangıca tarama planlar.
 
 ### 🕵️ [3] PC Expert Mode (Ekspertiz Modu)
-Ikinci el bilgisayar alirken veya donanim test ederken kullanabileceginiz gelismis araclar.
-*   🔍 **Donanım Dedektifi:** CPU, RAM, GPU ve Disklerin **gercek** bilgilerini gosterir (Sahte/Fake donanimi ifsa eder).
-*   🎨 **Ölü Piksel Testi:** Ekrani farkli renklerle test ederek olu pikselleri bulmanizi saglar.
-*   ⌨️ **Klavye Testi:** Hangi tuslarin calisip calismadigini anlik gosterir.
-*   🔥 **Stress Testi:** CPU'yu 30 saniye boyunca %100 yuke sokarak stabiliteyi test eder.
-*   🔋 **Pil Sağlığı & Lisans:** Laptop pil omrunu ve Windows lisansinin turunu (OEM/Retail/KMS) gosterir.
-*   🔊 **Ses Testi:** Hoparlorlerden test sesleri calar.
-*   🌐 **Ağ Stabilite Testi:** Google ve Cloudflare sunucularina ping atarak paket kaybi (packet loss) olup olmadigini olcer.
-*   📄 **Rapor Oluştur:** Tum sistem bilgilerini iceren detayli bir `.txt` raporunu masaustune kaydeder.
+İkinci el bilgisayar alırken veya donanım test ederken kullanabileceğiniz gelişmiş araçlar.
+*   🔍 **Donanım Dedektifi:** CPU, RAM, GPU ve Disklerin **gerçek** bilgilerini gösterir (Sahte/Fake donanımı ifşa eder).
+*   🎨 **Ölü Piksel Testi:** Ekranı farklı renklerle test ederek ölü pikselleri bulmanızı sağlar.
+*   ⌨️ **Klavye Testi:** Hangi tuşların çalışıp çalışmadığını anlık gösterir.
+*   🔥 **Stress Testi:** CPU'yu 30 saniye boyunca %100 yüke sokarak stabiliteyi test eder.
+*   🔋 **Pil Sağlığı & Lisans:** Laptop pil ömrünü ve Windows lisansının türünü (OEM/Retail/KMS) gösterir.
+*   🌐 **Ağ Stabilite Testi:** Mükemmel MS ölçümü için Google/Cloudflare sunucularına ping atar.
 
 ### 🎮 [4] Gaming Tools (Oyun Araçları)
-Oyun performansini artirmak ve eksik bilesenleri tamamlamak icin ozel araclar.
-*   🎮 **Visual C++ Redistributable (AIO):** 2005'ten gunumuze tum C++ kutuphanelerini tek tikla kurar (Oyun acilmama sorunlarini cozer).
-*   🎮 **DirectX Web Installer:** Eksik DirectX dosyalarini tamamlar.
-*   ⚡ **Nihai Performans Modu:** Windows'un gizli "Ultimate Performance" guc planini aktif eder.
+Oyun performansını artırmak ve eksik bileşenleri tamamlamak için özel araçlar.
+*   🎮 **Visual C++ Redistributable (AIO):** 2005'ten günümüze tüm C++ kütüphanelerini tek tıkla kurar.
+*   🎮 **DirectX Web Installer:** Eksik DirectX dosyalarını tamamlar.
+*   ⚡ **Nihai Performans Modu:** Windows'un gizli "Ultimate Performance" güç planını aktif eder.
 
 ### 🌐 [5] Network Tools (Ağ Araçları)
-Internet ve ag ayarlarini ozellestirir.
-*   🌍 **DNS Değiştirici:** Tek tikla **Cloudflare (1.1.1.1)** veya **Google (8.8.8.8)** DNS ayarlar.
-*   🔄 **Otomatik DNS (DHCP):** Ag ayarlarini varsayilana dondurur.
-*   🧹 **Ağ Önbelleği Sıfırlama:** Winsock ve IP yiginini onarir.
+İnternet ve ağ ayarlarını özelleştirir.
+*   🌍 **Akıllı DNS Değiştirici:** Tek tıkla **Cloudflare (1.1.1.1)** veya **Google (8.8.8.8)** DNS ayarlar. (Sanal ağları es geçer, VPN bozmaz!)
+*   🔄 **Otomatik DNS (DHCP):** Ağ ayarlarını varsayılana döndürür.
+*   🧹 **Ağ Önbelleği Sıfırlama:** Winsock ve IP yığınını temelden onarır.
 
 ### 🚑 [6] Daily Fixes (Gündelik Çözümler)
-Sik karsilasilan sorunlar icin hizli cozumler.
-*   🖨️ **Yazıcı (Print Spooler) Onarımı:** Yazdirma kuyrugunu temizler ve servisi yeniden baslatir.
-*   � **Microsoft Store Reset:** Calismayan Windows Magaza'yi (WSReset) onarir.
-*   � **Wi-Fi Şifre Gösterici:** Kayitli tum Wi-Fi sifrelerini listeler.
-*   ⏰ **Saat Senkronizasyonu:** Windows saati yanlis ise sunucu ile esitler.
+Sık karşılaşılan sorunlar için hızlı çözümler.
+*   🖨️ **Yazıcı Onarımı:** Yazdırma kuyruğunu temizler ve servisi yeniden başlatır.
+*   🛒 **Microsoft Store Reset:** Çalışmayan Windows Mağaza'yı onarır.
+*   🔑 **Wi-Fi Şifre Gösterici:** Kayıtlı tüm Wi-Fi şifrelerini anında listeler.
 
-### 🛠️ [7] Extra Tools (Ekstra Araçlar)
-*   🧹 **Disk Temizleme:** Windows'un kendi disk temizleme aracini (cleanmgr) baslatir.
-*   📦 **Windows Update Onarımı:** `SoftwareDistribution` klasorunu temizleyerek guncelleme hatalarini cozer.
-
-### � [9] Microsoft Activation (MAS)
-Sisteme **Microsoft Activation Scripts (MAS) v2.5** entegre edilmistir.
-*   ✅ **Windows & Office Etkinleştirme:** HWID/KMS38/Online KMS yontemleri ile kalici etkinlestirme saglar.
-*   ✅ **Guvenli & Acik Kaynak:** Icerik dogrudan MAS projesinden alinmistir.
+### 🔑 [9] Microsoft Activation (MAS)
+Sisteme **Microsoft Activation Scripts (MAS) v2.5** entegre edilmiştir.
+*   ✅ **Windows & Office Etkinleştirme:** HWID/KMS38/Online KMS yöntemleri ile kalıcı lisans sağlar.
 
 ---
 
@@ -72,28 +69,23 @@ Bu bir kurulum gerektirmez! Sadece dosyayı indirin ve çalıştırın.
 1.  **İndirin:** `UDYRYZN_ULTIMATE_REPAIR.ps1` dosyasını masaüstüne indirin.
 2.  **Sağ Tık:** Dosyaya sağ tıklayın.
 3.  **Çalıştır:** `PowerShell ile Çalıştır` seçeneğine tıklayın.
-4.  **İzin Ver:** Yönetici izni isterse `Evet` deyin.
+4.  **İzin Ver:** Yönetici izni isterse işlemden şüphe etmeyin ve `Evet` deyin. Zaten araç kendi kendini güvenlikli ortamda (RunAs) başlatıyor.
 
-> **Not:** İlk çalıştırmada "Execution Policy" hatası alırsanız, PowerShell'i açıp şu komutu yapıştırın:
+> **Not:** İlk çalıştırmada "Execution Policy" hatası alırsanız, PowerShell'i yönetici olarak açıp şu komutu yapıştırın:
 > `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force`
 
 ---
 
-## ⚙️ OTOMATİK GÜNCELLEME (AUTO-UPDATE)
+## ⚠️ GELİŞTİRİCİLER İÇİN ÇOK ÖNEMLİ UYARI!
 
-Bu araç, kendini GitHub üzerinden otomatik günceller!
-*   Yeni bir versiyon çıktığında açılış ekranında sizi uyarır.
-*   Onay verirseniz; **eski sürümü yedekler**, yenisini indirir ve **UTF-8 BOM** formatında güvenle kurup kendini yeniden başlatır.
+Eğer kaynak kodunu indirip kendinize göre modifiye etmek istiyorsanız, **Not Defteri (Notepad) ile asla standart UTF-8 formatında kaydetmeyin!** 
 
----
-
-## ⚠️ YASAL UYARI (DISCLAIMER)
-
-Bu araç sistem dosyaları üzerinde değişiklik yapar. Her ne kadar güvenli kodlanmış olsa da, **önemli verilerinizin yedeğini almanız** tavsiye edilir. Oluşabilecek sorunlardan kullanıcı sorumludur.
+> [!WARNING]
+> Windows PowerShell (v5.1), dosyanın en başında "BOM (Byte Order Mark)" imzasını görmediği zaman yazıları standart (ANSI) olarak okur. Bu da kodların içindeki tüm çekarlı / havalı sembollerin (`✓`, `⚙️`, `⚠️`) parçalanmasına, tırnak işaretlerinin birbirine girmesine ve scriptin çalışmadan syntax hatası ile çökmesine sebep olur.
+> 
+> **Kodu Düzenledikten Sonra Kaydederken:** Kesinlikle **"UTF-8 with BOM"** (BOM'lu UTF-8) formatını seçmelisiniz. (Notepad++ veya modern VS Code kullanılması şiddetle tavsiye edilir).
 
 ---
 
-### Credit: **udyrYzn**
-### Credit: **MASSGRAVE**
+### Mimar ve Tasarımcı: **udyrYzn**
 *Developed with ❤️ for Windows Enthusiasts.*
-
