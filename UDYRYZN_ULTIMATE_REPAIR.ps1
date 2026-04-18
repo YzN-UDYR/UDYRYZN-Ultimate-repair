@@ -40,7 +40,7 @@ try {
     if ($RAW_DATA) {
         $ONLINE_VER = ([string]$RAW_DATA).Trim() 
 
-        if ([decimal]$ONLINE_VER -gt [decimal]$CURRENT_VER) {
+        if ([version]$ONLINE_VER -gt [version]$CURRENT_VER) {
             Clear-Host
             Write-Host ""
             Write-Host ""
