@@ -6,7 +6,7 @@
 
 ---
 
-## 🌟 Yeni Nesil Özellikler (v2.8)
+## 🌟 Yeni Nesil Özellikler (v2.9)
 
 ⚡ **Instant KeyRead (Anında Tepki):** Menülerde seçim yaparken "Enter" tuşuna basmanıza gerek kalmaz. Seçeneğe dokunduğunuz milisaniye içerisinde sistem algılar ve aksiyon alır.
 
